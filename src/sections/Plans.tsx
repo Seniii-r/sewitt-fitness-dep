@@ -307,7 +307,7 @@ export default function Plans() {
                   <a
                     href="#contact"
                     className={[
-                      "absolute bottom-7 left-1/2 -translate-x-1/2",
+                      "absolute bottom-17 left-1/2 -translate-x-1/2",
                       "inline-flex items-center justify-center",
                       "px-10 py-3 text-black sm:text-lg font-semibold",
                       "transition-all hover:scale-[1.02]",
