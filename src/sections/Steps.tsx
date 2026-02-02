@@ -2,23 +2,6 @@
 import { Timeline, type TimelineEntry } from "../components/timeline"
 
 export default function Steps() {
-  const PrimaryBtn = ({
-    href,
-    label,
-  }: {
-    href: string
-    label: string
-  }) => (
-    <a
-      href={href}
-      className="inline-flex items-center gap-2 rounded-full bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-white/90"
-    >
-      {label}
-      <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white text-zinc-900 dark:bg-black dark:text-white">
-        →
-      </span>
-    </a>
-  )
   const Bullet = ({ children }: { children: React.ReactNode }) => (
     <div className="flex items-start gap-2">
       <span className="mt-1.5 h-2 w-2 rounded-full bg-white/25" />

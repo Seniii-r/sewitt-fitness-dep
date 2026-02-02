@@ -73,9 +73,8 @@ export default function Hero() {
     let ratioFade = 1
     const thresholds = Array.from({ length: 51 }, (_, i) => i / 50)
 
-    // ✅ Hold at 1 for a while, then smoothly blend into ratioFade
-    const HOLD_PX = 220          // no fade at all before this
-    const RAMP_PX = 260          // how long the blend lasts
+    const HOLD_PX = 220
+    const RAMP_PX = 260
 
     const obs = new IntersectionObserver(
       ([entry]) => {
@@ -94,10 +93,7 @@ export default function Hero() {
         return
       }
 
-      // 0..1 ramp after HOLD_PX
       const rampT = clamp01((y - HOLD_PX) / RAMP_PX)
-
-      // blend from 1 -> ratioFade gradually
       const next = 1 - rampT * (1 - ratioFade)
       setFade(next)
     }
@@ -122,6 +118,9 @@ export default function Hero() {
     link.href = "https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap"
     document.head.appendChild(link)
   }, [])
+
+  // ✅ Mobile menu state
+  const [menuOpen, setMenuOpen] = useState(false)
 
   return (
     <section
@@ -151,6 +150,7 @@ export default function Hero() {
       <div className="mx-auto flex h-full w-full flex-col px-5 sm:px-8 lg:px-16 2xl:px-24">
         <div className="pt-4 sm:pt-6">
           <div className="flex items-center justify-between">
+            {/* ✅ Desktop nav (unchanged) */}
             <nav className="hidden items-center gap-6 text-sm md:flex" style={{ color: `${BRAND.smoke}B3` }}>
               {nav.map((x) => (
                 <a key={x.label} href={x.href} className="hover:text-[#F5F5F2]">
@@ -159,8 +159,49 @@ export default function Hero() {
               ))}
             </nav>
 
-            <div className="md:hidden" />
+            {/* ✅ Mobile menu button */}
+            <div className="relative md:hidden">
+              <button
+                type="button"
+                onClick={() => setMenuOpen((v) => !v)}
+                className="inline-flex items-center justify-center rounded-full border px-4 py-2 text-xs font-semibold backdrop-blur-md"
+                style={{
+                  color: BRAND.smoke,
+                  borderColor: "rgba(245,245,242,0.18)",
+                  backgroundColor: "rgba(11,11,12,0.35)",
+                }}
+                aria-expanded={menuOpen}
+                aria-label="Open menu"
+              >
+                Menu
+              </button>
 
+              {menuOpen && (
+                <div
+                  className="absolute left-0 mt-3 w-56 overflow-hidden rounded-2xl border backdrop-blur-md"
+                  style={{
+                    borderColor: "rgba(245,245,242,0.16)",
+                    backgroundColor: "rgba(11,11,12,0.75)",
+                  }}
+                >
+                  <div className="grid py-2">
+                    {nav.map((x) => (
+                      <a
+                        key={x.label}
+                        href={x.href}
+                        onClick={() => setMenuOpen(false)}
+                        className="px-4 py-3 text-sm transition-colors hover:bg-white/10"
+                        style={{ color: "rgba(245,245,242,0.85)" }}
+                      >
+                        {x.label}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Top-right CTA */}
             <a
               href="#contact"
               className="inline-flex items-center gap-3 px-3 py-2 text-xs font-semibold shadow-lg transition-transform hover:scale-[1.01] sm:px-4 sm:text-sm"
