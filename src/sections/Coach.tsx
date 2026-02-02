@@ -52,12 +52,11 @@ export default function CoachAbout() {
         />
       </div>
 
-      <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col justify-center px-6 sm:px-12 lg:px-16 2xl:px-24">
-        {/* Content */}
-        <div className="grid items-center gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:gap-10">
-          {/* LEFT: crossfade images (bigger) */}
+      <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col justify-center px-5 py-16 sm:px-12 sm:py-20 lg:px-16 2xl:px-24">
+        <div className="grid items-center gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:gap-10">
+          {/* LEFT: crossfade images */}
           <div className="relative">
-            <div className="relative h-[520px] w-full sm:h-[620px] lg:h-[680px]">
+            <div className="relative h-[340px] w-full sm:h-[520px] lg:h-[680px]">
               {images.map((src, i) => (
                 <img
                   key={`${src}-${i}`}
@@ -75,7 +74,6 @@ export default function CoachAbout() {
                 />
               ))}
 
-              {/* edge fade so the image blends into onyx */}
               <div
                 className="pointer-events-none absolute inset-0"
                 style={{
@@ -84,7 +82,6 @@ export default function CoachAbout() {
                 }}
               />
 
-              {/* subtle vignette */}
               <div
                 className="pointer-events-none absolute inset-0"
                 style={{
@@ -95,17 +92,20 @@ export default function CoachAbout() {
             </div>
           </div>
 
-          {/* RIGHT: Title + text (title centered above paragraph) */}
+          {/* RIGHT: Title + text */}
           <div className="lg:pl-2">
-            <h2
-              className="text-center font-semibold uppercase tracking-[0.28em]"
-              style={{
-                color: "rgba(245,245,242,0.78)",
-                fontSize: "clamp(16px, 1.6vw, 22px)",
-              }}
-            >
-              About Sewitt Fitness
-            </h2>
+            {/* TITLE (replaced only) */}
+            <h1 className="leading-[0.82]" style={{ color: BRAND.smoke }}>
+              <span
+                className="block text-3xl sm:text-4xl md:text-5xl"
+                style={{
+                  fontWeight: 800,
+                  letterSpacing: "0.15em",
+                }}
+              >
+                ABOUT SEWITT FITNESS
+              </span>
+            </h1>
 
             <div className="mt-8">
               <p className="text-base leading-7 sm:text-lg sm:leading-8" style={{ color: "rgba(245,245,242,0.86)" }}>

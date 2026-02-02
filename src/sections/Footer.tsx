@@ -12,7 +12,7 @@ export default function Footer() {
             <p className="mt-2 max-w-sm text-xs leading-5 text-white/60">
               Improve your performance with personalized coaching plans.
             </p>
-            <div className="mt-6 text-xs text-white/35">Created by Sebadam</div>
+            <div className="mt-6 text-xs text-white/35">Created by The Ikigai Project</div>
           </div>
 
           <div className="md:justify-self-end">

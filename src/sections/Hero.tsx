@@ -14,6 +14,8 @@ const BRAND = {
   gold: "#E9D050",
 }
 
+const clamp01 = (n: number) => Math.min(1, Math.max(0, n))
+
 export default function Hero() {
   const nav = useMemo(
     () => [
@@ -45,7 +47,6 @@ export default function Hero() {
     []
   )
 
-  // testimonial mini-slider
   const [idx, setIdx] = useState(0)
   const [show, setShow] = useState(true)
 
@@ -63,7 +64,6 @@ export default function Hero() {
 
   const current = testimonials[idx]
 
-  // Fade on scroll
   const [fade, setFade] = useState(1)
 
   useEffect(() => {
@@ -73,11 +73,13 @@ export default function Hero() {
     let ratioFade = 1
     const thresholds = Array.from({ length: 51 }, (_, i) => i / 50)
 
+    // ✅ Hold at 1 for a while, then smoothly blend into ratioFade
+    const HOLD_PX = 220          // no fade at all before this
+    const RAMP_PX = 260          // how long the blend lasts
+
     const obs = new IntersectionObserver(
       ([entry]) => {
-        const r = entry.intersectionRatio
-        ratioFade = Math.min(1, Math.max(0, r))
-        if (window.scrollY > 0) setFade(ratioFade)
+        ratioFade = clamp01(entry.intersectionRatio)
       },
       { threshold: thresholds }
     )
@@ -85,19 +87,32 @@ export default function Hero() {
     obs.observe(el)
 
     const onScroll = () => {
-      if (window.scrollY <= 0) setFade(1)
-      else setFade(ratioFade)
+      const y = window.scrollY || 0
+
+      if (y <= HOLD_PX) {
+        setFade(1)
+        return
+      }
+
+      // 0..1 ramp after HOLD_PX
+      const rampT = clamp01((y - HOLD_PX) / RAMP_PX)
+
+      // blend from 1 -> ratioFade gradually
+      const next = 1 - rampT * (1 - ratioFade)
+      setFade(next)
     }
 
     onScroll()
     window.addEventListener("scroll", onScroll, { passive: true })
+    window.addEventListener("resize", onScroll)
+
     return () => {
       obs.disconnect()
       window.removeEventListener("scroll", onScroll)
+      window.removeEventListener("resize", onScroll)
     }
   }, [])
 
-  // Load brushstroke font (Permanent Marker)
   useEffect(() => {
     const id = "sf-permanent-marker-font"
     if (document.getElementById(id)) return
@@ -111,34 +126,31 @@ export default function Hero() {
   return (
     <section
       id="home"
-      className="relative isolate h-[100vh] max-h-[100vh] overflow-hidden transition-opacity duration-500 ease-out"
+      className={[
+        "relative isolate overflow-hidden transition-opacity duration-500 ease-out",
+        "min-h-[100dvh] md:h-[100vh] md:max-h-[100vh]",
+      ].join(" ")}
       style={{ opacity: fade }}
     >
-      {/* Solid background + red accent */}
       <div className="absolute inset-0 -z-10">
         <div className="absolute inset-0" style={{ backgroundColor: "rgba(11, 11, 12, 1)" }} />
         <div
           className="absolute inset-0"
           style={{
-            background:
-              "radial-gradient(900px 480px at 20% 30%, rgba(233, 208, 80, 0.19), transparent 60%)",
+            background: "radial-gradient(900px 480px at 20% 30%, rgba(233, 208, 80, 0.19), transparent 60%)",
           }}
         />
         <div
           className="absolute inset-0"
           style={{
-            background:
-              "radial-gradient(700px 420px at 0% 0%, rgba(233, 208, 80, 0.19), transparent 62%)",
+            background: "radial-gradient(700px 420px at 0% 0%, rgba(233, 208, 80, 0.19), transparent 62%)",
           }}
         />
       </div>
 
-      {/* Full width wrapper */}
-      <div className="mx-auto flex h-full w-full flex-col px-8 sm:px-10 lg:px-16 2xl:px-24">
-        {/* Top row */}
-        <div className="pt-5 sm:pt-6">
+      <div className="mx-auto flex h-full w-full flex-col px-5 sm:px-8 lg:px-16 2xl:px-24">
+        <div className="pt-4 sm:pt-6">
           <div className="flex items-center justify-between">
-            {/* Nav left */}
             <nav className="hidden items-center gap-6 text-sm md:flex" style={{ color: `${BRAND.smoke}B3` }}>
               {nav.map((x) => (
                 <a key={x.label} href={x.href} className="hover:text-[#F5F5F2]">
@@ -149,28 +161,24 @@ export default function Hero() {
 
             <div className="md:hidden" />
 
-            {/* Top-right CTA */}
             <a
               href="#contact"
-              className="inline-flex items-center gap-3 px-4 py-2 text-sm font-semibold shadow-lg transition-transform hover:scale-[1.01]"
+              className="inline-flex items-center gap-3 px-3 py-2 text-xs font-semibold shadow-lg transition-transform hover:scale-[1.01] sm:px-4 sm:text-sm"
               style={{
                 backgroundColor: BRAND.red,
                 color: BRAND.smoke,
                 border: "1px solid rgba(193, 18, 31, 1)",
               }}
             >
-              Book Free Intro Session
+              See How Coaching Works
             </a>
           </div>
         </div>
 
-        {/* Main hero layout */}
-        <div className="flex flex-1 items-center">
+        <div className="flex flex-1 items-center py-10 sm:py-12 md:py-0">
           <div className="w-full">
             <div className="grid w-full items-start gap-10 lg:grid-cols-[1.05fr_0.95fr]">
-              {/* LEFT: Title + copy */}
               <div className="max-w-2xl">
-                {/* Title (top-left) */}
                 <h1 className="leading-[0.82] tracking-tight" style={{ color: BRAND.smoke }}>
                   <span
                     className="block text-5xl sm:text-6xl md:text-9xl"
@@ -184,25 +192,16 @@ export default function Hero() {
                   </span>
                 </h1>
 
-                {/* Subtitle */}
-                <h2
-                  className="mt-6 text-3xl font-semibold leading-[1.06] sm:text-4xl"
-                  style={{ color: BRAND.smoke }}
-                >
+                <h2 className="mt-6 text-2xl font-semibold leading-[1.06] sm:text-4xl" style={{ color: BRAND.smoke }}>
                   A complete coaching experience, not just workouts.
                 </h2>
 
-                {/* Paragraph */}
-                <p
-                  className="mt-5 text-sm leading-6 sm:text-base sm:leading-7"
-                  style={{ color: "rgba(245,245,242,0.72)" }}
-                >
+                <p className="mt-5 text-sm leading-6 sm:text-base sm:leading-7" style={{ color: "rgba(245,245,242,0.72)" }}>
                   Train with structure, accountability, and a coach you work closely with over time, so your results
                   actually stick. Consistency beats intensity, the plan adapts as you progress, and the process stays
                   clear.
                 </p>
 
-                {/* Small proof/review card */}
                 <div
                   className="mt-7 w-full max-w-xl overflow-hidden rounded-3xl border p-5 backdrop-blur-md"
                   style={{
@@ -224,13 +223,8 @@ export default function Hero() {
                     </div>
                   </div>
 
-                  <div className="relative mt-3 h-[84px] sm:h-[96px]">
-                    <div
-                      className={cn(
-                        "absolute inset-0 transition-opacity duration-500 ease-out",
-                        show ? "opacity-100" : "opacity-0"
-                      )}
-                    >
+                  <div className="relative mt-3 h-[96px] sm:h-[96px]">
+                    <div className={cn("absolute inset-0 transition-opacity duration-500 ease-out", show ? "opacity-100" : "opacity-0")}>
                       <p className="text-sm leading-6" style={{ color: "rgba(245,245,242,0.90)" }}>
                         “{current.quote}”
                       </p>
@@ -250,17 +244,15 @@ export default function Hero() {
                 </div>
               </div>
 
-              {/* RIGHT: Big image with CTA overlay at bottom */}
               <div className="flex justify-center lg:justify-end">
                 <div className="relative w-full max-w-[720px]">
                   <img
                     src="/img/hero1.jpeg"
                     alt="Sewitt"
-                    className="h-[420px] w-full object-cover sm:h-[720px]"
+                    className="h-[340px] w-full object-cover sm:h-[520px] lg:h-[720px]"
                     style={{ backgroundColor: "rgba(11, 11, 12, 1)" }}
                   />
 
-                  {/* subtle fade behind button for readability */}
                   <div
                     className="pointer-events-none absolute inset-x-0 bottom-0 h-32"
                     style={{
@@ -268,19 +260,19 @@ export default function Hero() {
                     }}
                   />
 
-                  {/* CTA ON the image, pinned to bottom */}
                   <a
                     href="#contact"
                     className={[
-                      "absolute bottom-7 left-1/2 -translate-x-1/2",
+                      "absolute left-1/2 -translate-x-1/2",
+                      "bottom-5 sm:bottom-7",
                       "inline-flex items-center justify-center",
-                      "px-10 py-3 text-base sm:text-lg font-semibold",
+                      "px-6 sm:px-10 py-3 text-base sm:text-lg font-semibold",
                       "transition-all hover:scale-[1.02]",
                       "bg-white/10 text-[#F5F5F2] border border-white/15 backdrop-blur-md",
                       "hover:bg-[#C1121F]/15 hover:border-[#C1121F]/40 hover:shadow-[0_18px_60px_rgba(193,18,31,0.45)]",
                     ].join(" ")}
                   >
-                    See How Coaching Works
+                    Book Free Intro Session
                   </a>
                 </div>
               </div>

@@ -1,6 +1,6 @@
-// sections/Testimonials.tsx
+// src/sections/Testimonials.tsx
 import { useEffect, useRef, useState } from "react"
-import PixelTransition from "../components/PixelTransition" // <- adjust if your path differs
+import PixelTransition from "../components/PixelTransition"
 
 type Testimonial = {
   id: number
@@ -23,7 +23,8 @@ const testimonials: Testimonial[] = [
     name: "Robert Meschino",
     role: "Body Recomposition",
     rating: 5,
-    quote: "I would like to thank Chris my first trainer. Before working with him I was 273lbs. weighed in at 233lbs this morning. Hark work commitment and dedication on my part it's paying off.",
+    quote:
+      "I would like to thank Chris my first trainer. Before working with him I was 273lbs. weighed in at 233lbs this morning. Hark work commitment and dedication on my part it's paying off.",
   },
   {
     id: 3,
@@ -51,13 +52,10 @@ export default function Testimonials() {
 
     const thresholds = Array.from({ length: 31 }, (_, i) => i / 30)
 
-    const obs = new IntersectionObserver(
-      ([entry]) => {
-        const r = clamp01(entry.intersectionRatio)
-        setFade(smoothstep(r))
-      },
-      { threshold: thresholds }
-    )
+    const obs = new IntersectionObserver(([entry]) => {
+      const r = clamp01(entry.intersectionRatio)
+      setFade(smoothstep(r))
+    }, { threshold: thresholds })
 
     obs.observe(el)
 
@@ -120,27 +118,32 @@ export default function Testimonials() {
 
       {/* CONTENT */}
       <div className="relative z-10 mx-auto flex min-h-screen max-w-6xl flex-col justify-center px-5 py-14 sm:px-6">
-        {/* Header */}
-        <div className="mx-auto max-w-2xl text-center">
+        <div className="mx-auto max-w-2xl text-center text-zinc-900">
           <div className="flex justify-center gap-1 text-amber-500">
             {Array.from({ length: 5 }).map((_, i) => (
               <span key={i}>★</span>
             ))}
           </div>
 
-          <h2 className="mt-4 text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
-            Real results from real people
-          </h2>
+          {/* TITLE (replaced) */}
+          <div className="mt-6">
+            <h1 className="leading-[0.82] tracking-tight text-current">
+              <span
+                className="block text-3xl sm:text-4xl md:text-5xl"
+                style={{ fontWeight: 800, letterSpacing: "0.15em" }}
+              >
+                REAL RESULTS
+              </span>
+            </h1>
+          </div>
 
           <p className="mt-3 text-sm leading-6 text-zinc-600 sm:text-base">
             Proof beats promises. Here’s what clients say after putting in the work.
           </p>
         </div>
 
-        {/* Cards */}
         <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {testimonials.map((t) => {
-            // ✅ MIDDLE CARD: PixelTransition to /img/testamonial.jpg
             if (t.id === 2) {
               return (
                 <PixelTransition
@@ -151,7 +154,7 @@ export default function Testimonials() {
                     "shadow-[0_18px_50px_-30px_rgba(0,0,0,0.30)]",
                     "transition-transform duration-300 hover:-translate-y-1",
                   ].join(" ")}
-                  aspectRatio="120%" // gives it a nice card height; tweak if you want taller/shorter
+                  aspectRatio="120%"
                   gridSize={8}
                   pixelColor="#ffffff"
                   animationStepDuration={0.45}
@@ -186,7 +189,6 @@ export default function Testimonials() {
               )
             }
 
-            // Normal cards
             return (
               <div
                 key={t.id}

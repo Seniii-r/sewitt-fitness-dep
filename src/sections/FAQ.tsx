@@ -59,7 +59,6 @@ export default function FAQ() {
   const sectionRef = useRef<HTMLElement | null>(null)
   const rafRef = useRef<number | null>(null)
 
-  // scroll-driven reveal (no background color flipping)
   const [t, setT] = useState(0)
 
   useEffect(() => {
@@ -72,12 +71,9 @@ export default function FAQ() {
         const rect = el.getBoundingClientRect()
         const vh = window.innerHeight || 1
 
-        // enter 0..1 as the section comes in
         const enter = smoothstep(clamp01((vh - rect.top) / (vh * 0.7)))
-        // exit 0..1 as it leaves
         const exit = smoothstep(clamp01((vh - rect.bottom) / (vh * 0.7)))
 
-        // strong in the middle, fades at edges (fully reversible)
         const vis = clamp01(enter * (1 - exit))
         setT(vis)
       })
@@ -95,34 +91,31 @@ export default function FAQ() {
 
   return (
     <section ref={sectionRef as any} className="relative isolate w-full" style={{ backgroundColor: PAGE_BLACK }}>
-    {/* BACKGROUND + RED GLOW (FAQ) */}
-    <div
-      className="pointer-events-none fixed inset-0 z-0 transition-opacity duration-700 ease-out"
-      style={{ opacity: t }}   // reuse your existing visibility value
-      aria-hidden="true"
-    >
-      <div className="absolute inset-0" style={{ background: PAGE_BLACK }} />
+      {/* BACKGROUND + RED GLOW (FAQ) */}
+      <div
+        className="pointer-events-none fixed inset-0 z-0 transition-opacity duration-700 ease-out"
+        style={{ opacity: t }}
+        aria-hidden="true"
+      >
+        <div className="absolute inset-0" style={{ background: PAGE_BLACK }} />
+        <div
+          className="absolute inset-0"
+          style={{
+            background: "radial-gradient(700px 520px at 0% 22%, rgba(193, 18, 31, 0.45), transparent 62%)",
+          }}
+        />
+      </div>
 
       <div
-        className="absolute inset-0"
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 z-[1]"
         style={{
-          background: "radial-gradient(700px 520px at 0% 22%, rgba(193, 18, 31, 0.45), transparent 62%)",
+          background: "radial-gradient(800px 400px at 50% 35%, rgba(255,255,255,0.10), rgba(255,255,255,0) 60%)",
+          opacity: t,
         }}
       />
-    </div>
 
-    {/* optional: keep your spotlight on top of the glow */}
-    <div
-      aria-hidden="true"
-      className="pointer-events-none absolute inset-0 z-[1]"
-      style={{
-        background:
-          "radial-gradient(800px 400px at 50% 35%, rgba(255,255,255,0.10), rgba(255,255,255,0) 60%)",
-        opacity: t,
-      }}
-    />
-      
-      <div className="mx-auto min-h-screen max-w-6xl px-5 py-20 sm:px-6 sm:py-24">
+      <div className="mx-auto min-h-screen max-w-6xl px-5 py-16 sm:px-6 sm:py-24">
         <div
           className="text-center"
           style={{
@@ -131,14 +124,21 @@ export default function FAQ() {
             transition: "opacity 160ms linear, transform 160ms linear",
           }}
         >
-          <div className="text-xs font-medium tracking-wide text-white/60">FAQ</div>
-          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-            Everything you need to know
-          </h2>
+      
+
+          {/* Title (replaced only) */}
+          <h1 className="mt-6 leading-[0.82] tracking-tight text-white">
+            <span
+              className="block text-3xl sm:text-4xl md:text-5xl"
+              style={{ fontWeight: 800, letterSpacing: "0.15em" }}
+            >
+              FAQ
+            </span>
+          </h1>
         </div>
 
         <div
-          className="mx-auto mt-12 w-full max-w-4xl rounded-2xl border border-zinc-200 bg-[#0B0B0C] px-6 shadow-[0_30px_90px_-60px_rgba(0,0,0,0.65)]"
+          className="mx-auto mt-12 w-full max-w-4xl rounded-2xl border border-zinc-200 bg-[#0B0B0C] px-4 sm:px-6 shadow-[0_30px_90px_-60px_rgba(0,0,0,0.65)]"
           style={{
             opacity: t,
             transform: `translateY(${(1 - t) * 14}px) scale(${0.985 + t * 0.015})`,

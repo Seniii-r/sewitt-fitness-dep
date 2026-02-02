@@ -90,12 +90,10 @@ export default function Plans() {
     setDir(direction)
     setIncomingIdx(next)
 
-    // critical: ensure incoming starts hidden before we flip it on
     setIncomingOn(false)
     requestAnimationFrame(() => setIncomingOn(true))
   }
 
-  // map scroll -> target idx + sectionFade
   useEffect(() => {
     const el = sectionRef.current
     if (!el) return
@@ -110,7 +108,6 @@ export default function Plans() {
         const scrolled = Math.min(Math.max(-rect.top, 0), totalScrollable)
         const p = scrolled / totalScrollable
 
-        // clean bands: 0..n-1 without skipping
         const next = Math.min(n - 1, Math.floor(p * n))
         setTargetIdx(next)
 
@@ -130,7 +127,6 @@ export default function Plans() {
     }
   }, [n])
 
-  // when scroll wants a new card, fade to it
   useEffect(() => {
     if (draggingRef.current) return
     if (incomingIdx !== null) return
@@ -185,7 +181,6 @@ export default function Plans() {
   const outY = incomingIdx == null ? 0 : incomingOn ? (dir === 1 ? -10 : 10) : 0
   const inY = incomingIdx == null ? 0 : incomingOn ? 0 : dir === 1 ? 10 : -10
 
-  // commit on incoming transition end (no mid-frame swaps)
   const onIncomingTransitionEnd = (e: React.TransitionEvent<HTMLDivElement>) => {
     if (e.propertyName !== "opacity") return
     if (incomingIdx == null) return
@@ -233,12 +228,20 @@ export default function Plans() {
 
       {/* FOREGROUND */}
       <div className="sticky top-0 z-10 flex min-h-screen flex-col justify-center px-5 py-14 sm:px-6 sm:py-16">
-        <h2
-          className="text-center text-xl font-semibold tracking-[0.22em] text-black sm:text-2xl uppercase"
-          style={{ opacity: sectionFade }}
-        >
-          Coaching Experience
-        </h2>
+        {/* TITLE (replaced) */}
+        <div className="mx-auto text-center text-black" style={{ opacity: sectionFade }}>
+          <h1 className="leading-[0.82] tracking-tight text-current">
+            <span
+              className="block text-3xl sm:text-4xl md:text-5xl"
+              style={{
+                fontWeight: 800,
+                letterSpacing: "0.15em",
+              }}
+            >
+              COACHING EXPERIENCE
+            </span>
+          </h1>
+        </div>
 
         <div className="mx-auto mt-10 w-full max-w-6xl">
           {/* CARD */}
@@ -280,7 +283,6 @@ export default function Plans() {
                   className="absolute inset-0"
                   onTransitionEnd={onIncomingTransitionEnd}
                   style={{
-                    // visibility gate prevents 1-frame flash on mount
                     visibility: incomingOn ? "visible" : "hidden",
                     opacity: inOpacity,
                     transform: `translate3d(0, ${inY}px, 0)`,
@@ -294,32 +296,28 @@ export default function Plans() {
                 </div>
               )}
 
-              {/* SIZER: keeps height stable so nothing jumps */}
+              {/* SIZER */}
               <div className="invisible">
                 <PlanCard plan={displayPlan} />
               </div>
             </div>
           </div>
 
-          {/* CTA BELOW THE CARD - EXACT HERO BUTTON STYLE (same colors) */}
-<div className="mt-7 flex justify-center">
-    {/* subtle fade behind button for readability */}
-                  <a
-                    href="#contact"
-                    className={[
-                      "absolute bottom-17 left-1/2 -translate-x-1/2",
-                      "inline-flex items-center justify-center",
-                      "px-10 py-3 text-black sm:text-lg font-semibold",
-                      "transition-all hover:scale-[1.02]",
-                      "bg-white/10 text-[#F5F5F2] border border-black/15 backdrop-blur-md",
-                      "hover:bg-[#C1121F]/15 hover:border-[#C1121F]/40 hover:shadow-[0_18px_60px_rgba(193,18,31,0.45)]",
-                    ].join(" ")}
-                  >
-                    See How Coaching Works
-                  </a>
-</div>
-
-          
+          {/* CTA BELOW THE CARD (mobile-safe) */}
+          <div className="mt-7 flex justify-center">
+            <a
+              href="#contact"
+              className={[
+                "inline-flex items-center justify-center",
+                "px-8 sm:px-10 py-3 text-base sm:text-lg font-semibold",
+                "transition-all hover:scale-[1.02]",
+                "bg-white/10 text-[#0B0B0C] border border-black/15 backdrop-blur-md",
+                "hover:bg-[#C1121F]/15 hover:border-[#C1121F]/40 hover:shadow-[0_18px_60px_rgba(193,18,31,0.45)]",
+              ].join(" ")}
+            >
+              See How Coaching Works
+            </a>
+          </div>
 
           <div className="mt-3 text-center text-xs text-black/45">
             Tip: scroll to progress, or drag up/down on the card to switch

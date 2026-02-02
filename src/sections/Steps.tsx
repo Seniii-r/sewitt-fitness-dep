@@ -32,9 +32,7 @@ export default function Steps() {
       content: (
         <div>
           <p className="text-sm text-white/80">
-            <span className="font-semibold text-white">
-               Free Intro Assessment
-            </span>{" "}
+            <span className="font-semibold text-white"> Free Intro Assessment</span>{" "}
             We assess your goals, your current starting point, and what it will realistically take to reach your outcome.
           </p>
 
@@ -94,9 +92,20 @@ export default function Steps() {
             <Bullet>Support when things get hard</Bullet>
           </div>
 
-          {/* ✅ Keep Get started, remove Back to Home */}
-          <div className="mt-6 flex justify-end">
-            <PrimaryBtn href="#contact" label="Get started" />
+          {/* ✅ Center-bottom, responsive */}
+          <div className="relative mt-10 flex justify-center pb-1 sm:pb-2 sm:right-40">
+            <a
+              href="#contact"
+              className={[
+                "inline-flex items-center justify-center",
+                "px-6 sm:px-10 py-3 text-base sm:text-lg font-semibold",
+                "transition-all hover:scale-[1.02]",
+                "bg-white/10 text-[#F5F5F2] border border-white/15 backdrop-blur-md",
+                "hover:bg-[#C1121F]/15 hover:border-[#C1121F]/40 hover:shadow-[0_18px_60px_rgba(193,18,31,0.45)]",
+              ].join(" ")}
+            >
+              Book Free Intro Session
+            </a>
           </div>
         </div>
       ),
