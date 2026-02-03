@@ -176,7 +176,7 @@ export function Timeline({
         <div
           style={{ height: height + "px" }}
           className={[
-            "pointer-events-none absolute left-18 top-0 w-[2px] overflow-hidden",
+            "pointer-events-none absolute left-[47px] sm:left-18 top-0 w-[2px] overflow-hidden",
             "bg-[linear-gradient(to_bottom,var(--tw-gradient-stops))]",
             "from-transparent via-white/20 to-transparent",
             "[mask-image:linear-gradient(to_bottom,transparent_0%,black_10%,black_90%,transparent_100%)]",

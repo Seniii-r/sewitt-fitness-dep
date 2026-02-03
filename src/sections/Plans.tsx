@@ -1,61 +1,55 @@
-// Plans.tsx
-import { useEffect, useMemo, useRef, useState } from "react"
+// src/sections/Plans.tsx
+import { useEffect, useRef, useState } from "react"
 import { cn } from "../lib/cn"
 
 const plans = [
   {
     tag: "",
-    title: "The Program",
-    bullets: [
-      "Clients at Sewitt Fitness don’t just show up for a workout. They work closely with the same coach multiple times per week, building a coaching relationship that allows for real adjustments, real accountability, and long-term progress.",
-    ],
+    title:
+      "Clients at Sewitt Fitness don’t just show up for a workout. They work closely with the same coach multiple times per week.",
+    body: "",
     img: "/img/boxing.jpeg",
   },
   {
     tag: "",
-    title: "What you get",
-    bullets: [
-      "A structured plan built around you (not trends)",
-      "Coaching that adjusts in real time as patterns show up",
-      "Accountability that doesn’t rely on motivation",
-      "Clear expectations, professional standards, and a documented process",
-      "Consistency built into your week so progress compounds",
-    ],
+    title:
+      "A structured plan built around you, coaching that adjusts as patterns show up, accountability that doesn’t rely on motivation, and a clear process with professional standards.",
+    body: "",
     img: "/img/Fitness.jpg",
   },
   {
     tag: "",
     title: "You don’t need more motivation. You need a system and someone who keeps you accountable to it.",
-    bullets: [],
+    body: "",
     img: "/img/mealprep.jpg",
   },
-]
+] as const
 
 const clamp01 = (n: number) => Math.min(1, Math.max(0, n))
 const smoothstep = (t: number) => t * t * (3 - 2 * t)
 
 function PlanCard({ plan }: { plan: (typeof plans)[number] }) {
   return (
-    <div className="grid gap-8 p-7 sm:p-10 md:grid-cols-[420px_1fr] md:items-center">
+    <div className="grid h-full gap-4 p-5 sm:p-8 md:grid-cols-[1fr_1fr] md:items-center md:gap-8">
       <div className="overflow-hidden rounded-3xl bg-white/5">
-        <img src={plan.img} alt="" className="h-72 w-full object-cover sm:h-80 md:h-[360px]" />
+        <img
+          src={plan.img}
+          alt=""
+          className="h-48 w-full object-cover sm:h-64 md:h-[420px] md:w-full"
+          draggable={false}
+        />
       </div>
 
-      <div className="grid gap-4 text-white">
-        {plan.tag ? <div className="text-sm text-white/60">{plan.tag}</div> : <div />}
+      <div className="grid gap-3 text-white">
+        {plan.tag ? <div className="text-xs text-white/60 sm:text-sm">{plan.tag}</div> : null}
 
-        <div className="text-2xl font-semibold tracking-tight sm:text-3xl">{plan.title}</div>
+        <div className="text-lg font-semibold leading-snug tracking-tight sm:text-2xl md:text-3xl">
+          {plan.title}
+        </div>
 
-        {plan.bullets.length > 0 && (
-          <ul className="mt-1 grid gap-3 text-base text-white/75">
-            {plan.bullets.map((b) => (
-              <li key={b} className="flex items-start gap-3">
-                <span className="mt-2 inline-block h-2 w-2 rounded-full bg-white/70" />
-                <span>{b}</span>
-              </li>
-            ))}
-          </ul>
-        )}
+        {plan.body ? (
+          <p className="text-sm leading-6 text-white/75 sm:text-base sm:leading-7">{plan.body}</p>
+        ) : null}
       </div>
     </div>
   )
@@ -64,139 +58,344 @@ function PlanCard({ plan }: { plan: (typeof plans)[number] }) {
 export default function Plans() {
   const n = plans.length
   const sectionRef = useRef<HTMLElement | null>(null)
-  const viewportRef = useRef<HTMLDivElement | null>(null)
 
-  const [targetIdx, setTargetIdx] = useState(0)
-  const [displayIdx, setDisplayIdx] = useState(0)
-
-  const [incomingIdx, setIncomingIdx] = useState<number | null>(null)
-  const [incomingOn, setIncomingOn] = useState(false)
-
-  const [dir, setDir] = useState<1 | -1>(1)
+  // Background glow fade
   const [sectionFade, setSectionFade] = useState(0)
-
-  const draggingRef = useRef(false)
-  const startYRef = useRef(0)
-  const [dragY, setDragY] = useState(0)
-
   const rafRef = useRef<number | null>(null)
+
+  // Slide index
+  const [idx, setIdx] = useState(0)
+  const idxRef = useRef(0)
+  useEffect(() => {
+    idxRef.current = idx
+  }, [idx])
+
+  // animation lock (prevents skipping multiple slides per fling)
+  const animLockRef = useRef(false)
   const DURATION = 520
 
-  const startTransition = (nextRaw: number, direction: 1 | -1) => {
-    const next = Math.min(n - 1, Math.max(0, nextRaw))
-    if (incomingIdx !== null) return
-    if (next === displayIdx) return
+  // page lock state
+  const [locked, setLocked] = useState(false)
+  const lockedRef = useRef(false)
+  useEffect(() => {
+    lockedRef.current = locked
+  }, [locked])
 
-    setDir(direction)
-    setIncomingIdx(next)
+  // direction tracking for entry
+  const lastScrollYRef = useRef<number>(typeof window !== "undefined" ? window.scrollY : 0)
+  const lastDirRef = useRef<1 | -1>(1) // 1=down, -1=up
 
-    setIncomingOn(false)
-    requestAnimationFrame(() => setIncomingOn(true))
+  // prevents instant re-lock after we intentionally unlock to exit
+  const armedRef = useRef(true)
+
+  // smoother lock scheduling
+  const pendingLockRef = useRef(false)
+
+  // store scroll position while locked (iOS-safe locking)
+  const savedScrollYRef = useRef(0)
+
+  // avoid layout jump when scrollbar disappears (desktop)
+  const savedPaddingRightRef = useRef("")
+  const savedScrollBehaviorRef = useRef("")
+
+  const getViewportH = () => window.visualViewport?.height ?? window.innerHeight ?? 1
+  const tol = 28
+
+  const isFullyVisibleNow = () => {
+    if (!sectionRef.current) return false
+    const r = sectionRef.current.getBoundingClientRect()
+    const vh = getViewportH()
+    return r.top >= -tol && r.bottom <= vh + tol
   }
 
+  const lockPage = () => {
+    if (lockedRef.current) return
+
+    // kill smooth scrolling during lock/unlock so it doesn't "animate" and flicker
+    savedScrollBehaviorRef.current = document.documentElement.style.scrollBehavior
+    document.documentElement.style.scrollBehavior = "auto"
+
+    const y = window.scrollY || 0
+    savedScrollYRef.current = y
+
+    // compensate scrollbar (prevents horizontal jump)
+    const scrollBarW = window.innerWidth - document.documentElement.clientWidth
+    const body = document.body
+    savedPaddingRightRef.current = body.style.paddingRight
+    if (scrollBarW > 0) body.style.paddingRight = `${scrollBarW}px`
+
+    // iOS-safe "freeze"
+    body.style.position = "fixed"
+    body.style.top = `-${y}px`
+    body.style.left = "0"
+    body.style.right = "0"
+    body.style.width = "100%"
+    body.style.transform = "translateZ(0)" // compositor hint, reduces paint weirdness
+
+    // stop chaining/rubber-banding where supported
+    document.documentElement.style.overscrollBehavior = "none"
+    body.style.overscrollBehavior = "none"
+
+    setLocked(true)
+  }
+
+  const unlockPage = () => {
+    if (!lockedRef.current) return
+
+    const body = document.body
+    const y = savedScrollYRef.current
+
+    body.style.position = ""
+    body.style.top = ""
+    body.style.left = ""
+    body.style.right = ""
+    body.style.width = ""
+    body.style.transform = ""
+
+    // restore scrollbar compensation
+    body.style.paddingRight = savedPaddingRightRef.current
+
+    document.documentElement.style.overscrollBehavior = ""
+    body.style.overscrollBehavior = ""
+
+    // restore scroll behavior AFTER we jump back
+    window.scrollTo(0, y)
+    document.documentElement.style.scrollBehavior = savedScrollBehaviorRef.current || ""
+
+    setLocked(false)
+  }
+
+  // safety cleanup
   useEffect(() => {
-    const el = sectionRef.current
-    if (!el) return
+    return () => unlockPage()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
+  const step = (dir: 1 | -1) => {
+    if (animLockRef.current) return
+    const cur = idxRef.current
+    const next = Math.min(n - 1, Math.max(0, cur + dir))
+    if (next === cur) return
+
+    setIdx(next)
+    idxRef.current = next
+
+    animLockRef.current = true
+    window.setTimeout(() => {
+      animLockRef.current = false
+    }, DURATION + 40)
+  }
+
+  const unlockForExit = () => {
+    armedRef.current = false
+    pendingLockRef.current = false
+    unlockPage()
+  }
+
+  // detect "fully in view" + background fade + entry logic (with smoother lock)
+  useEffect(() => {
     const onScroll = () => {
+      if (!sectionRef.current) return
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
+
       rafRef.current = requestAnimationFrame(() => {
-        const rect = el.getBoundingClientRect()
-        const vh = window.innerHeight || 1
+        const el = sectionRef.current!
+        const r = el.getBoundingClientRect()
+        const vh = getViewportH()
 
-        const totalScrollable = Math.max(1, el.offsetHeight - vh)
-        const scrolled = Math.min(Math.max(-rect.top, 0), totalScrollable)
-        const p = scrolled / totalScrollable
+        // track direction (only meaningful when not locked)
+        if (!lockedRef.current) {
+          const y = window.scrollY
+          const dy = y - lastScrollYRef.current
+          if (Math.abs(dy) > 1) lastDirRef.current = dy > 0 ? 1 : -1
+          lastScrollYRef.current = y
+        }
 
-        const next = Math.min(n - 1, Math.floor(p * n))
-        setTargetIdx(next)
-
-        const visiblePx = Math.min(vh, Math.max(0, rect.bottom)) - Math.max(0, rect.top)
+        // background fade
+        const visiblePx = Math.min(vh, Math.max(0, r.bottom)) - Math.max(0, r.top)
         const visibleRatio = clamp01(visiblePx / vh)
         setSectionFade(smoothstep(visibleRatio))
+
+        const fullyVisible = r.top >= -tol && r.bottom <= vh + tol
+
+        // re-arm once we’re no longer fully visible
+        if (!fullyVisible) {
+          armedRef.current = true
+          pendingLockRef.current = false
+        }
+
+        // schedule a smooth lock only when fully visible + armed + not already locked
+        if (fullyVisible && armedRef.current && !lockedRef.current && !pendingLockRef.current) {
+          pendingLockRef.current = true
+
+          // start card based on entry direction
+          const enteringDir = lastDirRef.current
+          const startIdx = enteringDir === 1 ? 0 : n - 1
+          setIdx(startIdx)
+          idxRef.current = startIdx
+
+          // delay lock until paint settles (reduces flicker)
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              if (!pendingLockRef.current) return
+              if (lockedRef.current) return
+              if (!armedRef.current) return
+              if (!isFullyVisibleNow()) {
+                pendingLockRef.current = false
+                return
+              }
+              lockPage()
+            })
+          })
+        }
       })
     }
 
     onScroll()
     window.addEventListener("scroll", onScroll, { passive: true })
     window.addEventListener("resize", onScroll)
+    window.visualViewport?.addEventListener("resize", onScroll)
+
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
       window.removeEventListener("scroll", onScroll)
       window.removeEventListener("resize", onScroll)
+      window.visualViewport?.removeEventListener("resize", onScroll)
     }
   }, [n])
 
+  // Wheel anywhere (desktop)
   useEffect(() => {
-    if (draggingRef.current) return
-    if (incomingIdx !== null) return
-    if (targetIdx !== displayIdx) startTransition(targetIdx, targetIdx > displayIdx ? 1 : -1)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [targetIdx, displayIdx, incomingIdx])
+    const onWheel = (e: WheelEvent) => {
+      if (!lockedRef.current) return
+      if (Math.abs(e.deltaY) < 10) return
 
-  const swipeThreshold = () => {
-    const h = viewportRef.current?.getBoundingClientRect().height ?? 1
-    return Math.max(70, h * 0.16)
-  }
+      const dir: 1 | -1 = e.deltaY > 0 ? 1 : -1
+      const cur = idxRef.current
 
-  const onPointerDown = (e: React.PointerEvent) => {
-    if (incomingIdx !== null) return
-    if (e.pointerType === "mouse" && e.button !== 0) return
-    draggingRef.current = true
-    startYRef.current = e.clientY
-    setDragY(0)
-    ;(e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId)
-  }
+      const atFirst = cur === 0
+      const atLast = cur === n - 1
 
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (!draggingRef.current) return
-    setDragY(e.clientY - startYRef.current)
-  }
+      if ((atLast && dir === 1) || (atFirst && dir === -1)) {
+        unlockForExit()
+        return
+      }
 
-  const endDrag = () => {
-    if (!draggingRef.current) return
-    draggingRef.current = false
+      if (e.cancelable) e.preventDefault()
+      step(dir)
+    }
 
-    const dy = dragY
-    const th = swipeThreshold()
+    window.addEventListener("wheel", onWheel, { passive: false })
+    return () => window.removeEventListener("wheel", onWheel as any)
+  }, [n])
 
-    if (dy <= -th) startTransition(displayIdx + 1, 1)
-    else if (dy >= th) startTransition(displayIdx - 1, -1)
+  // Touch anywhere (mobile)
+  useEffect(() => {
+    let startY = 0
+    let lastY = 0
+    let active = false
 
-    setDragY(0)
-  }
+    const onTouchStart = (e: TouchEvent) => {
+      if (!lockedRef.current) return
+      if (e.touches.length !== 1) return
+      active = true
+      startY = e.touches[0]!.clientY
+      lastY = startY
+    }
 
-  const onPointerUp = () => endDrag()
-  const onPointerCancel = () => endDrag()
-  const onPointerLeave = () => {
-    if (draggingRef.current) endDrag()
-  }
+    const onTouchMove = (e: TouchEvent) => {
+      if (!lockedRef.current || !active) return
+      if (e.touches.length !== 1) return
+      lastY = e.touches[0]!.clientY
 
-  const displayPlan = useMemo(() => plans[displayIdx], [displayIdx])
-  const incomingPlan = useMemo(() => (incomingIdx == null ? null : plans[incomingIdx]), [incomingIdx])
+      const dy = lastY - startY
+      if (Math.abs(dy) < 8) return
 
-  const outOpacity = incomingIdx == null ? 1 : incomingOn ? 0 : 1
-  const inOpacity = incomingIdx == null ? 0 : incomingOn ? 1 : 0
+      const dir: 1 | -1 = dy < 0 ? 1 : -1
+      const cur = idxRef.current
+      const atFirst = cur === 0
+      const atLast = cur === n - 1
 
-  const outY = incomingIdx == null ? 0 : incomingOn ? (dir === 1 ? -10 : 10) : 0
-  const inY = incomingIdx == null ? 0 : incomingOn ? 0 : dir === 1 ? 10 : -10
+      if ((atLast && dir === 1) || (atFirst && dir === -1)) {
+        unlockForExit()
+        active = false
+        return
+      }
 
-  const onIncomingTransitionEnd = (e: React.TransitionEvent<HTMLDivElement>) => {
-    if (e.propertyName !== "opacity") return
-    if (incomingIdx == null) return
-    if (!incomingOn) return
+      if (e.cancelable) e.preventDefault()
+    }
 
-    setDisplayIdx(incomingIdx)
-    setIncomingIdx(null)
-    setIncomingOn(false)
-  }
+    const onTouchEnd = () => {
+      if (!lockedRef.current || !active) {
+        active = false
+        return
+      }
+      active = false
+      if (animLockRef.current) return
+
+      const dy = lastY - startY
+      if (Math.abs(dy) < 55) return
+
+      const dir: 1 | -1 = dy < 0 ? 1 : -1
+      step(dir)
+    }
+
+    window.addEventListener("touchstart", onTouchStart, { passive: true })
+    window.addEventListener("touchmove", onTouchMove, { passive: false })
+    window.addEventListener("touchend", onTouchEnd, { passive: true })
+    window.addEventListener("touchcancel", onTouchEnd, { passive: true })
+
+    return () => {
+      window.removeEventListener("touchstart", onTouchStart as any)
+      window.removeEventListener("touchmove", onTouchMove as any)
+      window.removeEventListener("touchend", onTouchEnd as any)
+      window.removeEventListener("touchcancel", onTouchEnd as any)
+    }
+  }, [n])
+
+  // (Optional) keyboard support
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!lockedRef.current) return
+      if (animLockRef.current) return
+
+      const cur = idxRef.current
+      const atFirst = cur === 0
+      const atLast = cur === n - 1
+
+      if (e.key === "ArrowDown" || e.key === "PageDown" || e.key === " ") {
+        const dir: 1 | -1 = 1
+        if (atLast) {
+          unlockForExit()
+          return
+        }
+        e.preventDefault()
+        step(dir)
+      }
+
+      if (e.key === "ArrowUp" || e.key === "PageUp") {
+        const dir: 1 | -1 = -1
+        if (atFirst) {
+          unlockForExit()
+          return
+        }
+        e.preventDefault()
+        step(dir)
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown, { passive: false })
+    return () => window.removeEventListener("keydown", onKeyDown as any)
+  }, [n])
+
+  const translatePct = (idx * 100) / n
 
   return (
     <section
       id="plans"
       ref={sectionRef as any}
-      className="relative isolate"
-      style={{ height: n * 100 + "vh", background: "#F5F5F2" }}
+      className="relative isolate h-[100svh] w-full overflow-hidden"
+      style={{ background: "#F5F5F2" }}
     >
       {/* BACKGROUND + GLOW */}
       <div
@@ -205,7 +404,6 @@ export default function Plans() {
         aria-hidden="true"
       >
         <div className="absolute inset-0" style={{ background: "#F5F5F2" }} />
-
         <div
           className="absolute inset-0"
           style={{
@@ -226,87 +424,57 @@ export default function Plans() {
         />
       </div>
 
-      {/* FOREGROUND */}
-      <div className="sticky top-0 z-10 flex min-h-screen flex-col justify-center px-5 py-14 sm:px-6 sm:py-16">
-        {/* TITLE (replaced) */}
+      {/* CONTENT */}
+      <div className="relative z-10 mx-auto flex h-full max-w-6xl flex-col justify-center px-4 py-8 sm:px-6 sm:py-12">
         <div className="mx-auto text-center text-black" style={{ opacity: sectionFade }}>
           <h1 className="leading-[0.82] tracking-tight text-current">
             <span
               className="block text-3xl sm:text-4xl md:text-5xl"
-              style={{
-                fontWeight: 800,
-                letterSpacing: "0.15em",
-              }}
+              style={{ fontWeight: 800, letterSpacing: "0.15em" }}
             >
               COACHING EXPERIENCE
             </span>
           </h1>
         </div>
 
-        <div className="mx-auto mt-10 w-full max-w-6xl">
-          {/* CARD */}
+        <div className="mx-auto mt-6 w-full">
+          {/* BLACK WINDOW (constant size) */}
           <div
-            ref={viewportRef}
-            className={cn("relative overflow-hidden rounded-[32px] border border-black/10 bg-black shadow-sm select-none")}
-            style={{
-              opacity: Math.min(1, sectionFade * 1.05),
-              transform: `translateY(${sectionFade > 0.15 ? 0 : 10}px)`,
-              transition: "opacity 700ms ease-out, transform 700ms ease-out",
-              touchAction: "pan-y",
-            }}
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-            onPointerCancel={onPointerCancel}
-            onPointerLeave={onPointerLeave}
+            className={cn(
+              "relative mx-auto w-full overflow-hidden rounded-[32px] border border-black/10 bg-black shadow-sm"
+            )}
           >
-            {/* STACKED LAYERS (flash-proof) */}
-            <div className="relative">
-              {/* OUTGOING LAYER */}
+            <div
+              className="w-full"
+              style={{
+                height: "min(70vh, 560px)",
+                minHeight: "420px",
+              }}
+            >
+              {/* STACK */}
               <div
-                className="absolute inset-0"
+                className="grid w-full"
                 style={{
-                  opacity: outOpacity,
-                  transform: `translate3d(0, ${draggingRef.current ? dragY : outY}px, 0)`,
-                  transition: `opacity ${DURATION}ms ease-out, transform ${DURATION}ms ease-out`,
-                  willChange: "opacity, transform",
-                  backfaceVisibility: "hidden",
-                  pointerEvents: incomingIdx == null ? "auto" : "none",
+                  height: `${n * 100}%`,
+                  gridTemplateRows: `repeat(${n}, minmax(0, 1fr))`,
+                  transform: `translate3d(0, -${translatePct}%, 0)`,
+                  transition: `transform ${DURATION}ms ease-out`,
+                  willChange: "transform",
                 }}
               >
-                <PlanCard plan={displayPlan} />
-              </div>
-
-              {/* INCOMING LAYER */}
-              {incomingPlan && (
-                <div
-                  className="absolute inset-0"
-                  onTransitionEnd={onIncomingTransitionEnd}
-                  style={{
-                    visibility: incomingOn ? "visible" : "hidden",
-                    opacity: inOpacity,
-                    transform: `translate3d(0, ${inY}px, 0)`,
-                    transition: `opacity ${DURATION}ms ease-out, transform ${DURATION}ms ease-out`,
-                    willChange: "opacity, transform",
-                    backfaceVisibility: "hidden",
-                    pointerEvents: incomingOn ? "auto" : "none",
-                  }}
-                >
-                  <PlanCard plan={incomingPlan} />
-                </div>
-              )}
-
-              {/* SIZER */}
-              <div className="invisible">
-                <PlanCard plan={displayPlan} />
+                {plans.map((p, i) => (
+                  <div key={i} className="h-full">
+                    <PlanCard plan={p} />
+                  </div>
+                ))}
               </div>
             </div>
           </div>
 
-          {/* CTA BELOW THE CARD (mobile-safe) */}
-          <div className="mt-7 flex justify-center">
+          {/* CTA */}
+          <div className="mt-6 flex justify-center">
             <a
-              href="#contact"
+              href="#plan"
               className={[
                 "inline-flex items-center justify-center",
                 "px-8 sm:px-10 py-3 text-base sm:text-lg font-semibold",
@@ -317,10 +485,6 @@ export default function Plans() {
             >
               See How Coaching Works
             </a>
-          </div>
-
-          <div className="mt-3 text-center text-xs text-black/45">
-            Tip: scroll to progress, or drag up/down on the card to switch
           </div>
         </div>
       </div>

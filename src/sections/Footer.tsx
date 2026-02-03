@@ -8,7 +8,7 @@ export default function Footer() {
       <div className="mx-auto flex min-h-[38dvh] max-w-6xl flex-col justify-between px-5 py-12 sm:px-6 sm:py-16">
         <div className="grid gap-10 md:grid-cols-[1.4fr_0.8fr_0.8fr]">
           <div>
-            <div className="text-white/90">Perform</div>
+            <div className="text-white/90">Sewitt Fitness</div>
             <p className="mt-2 max-w-sm text-xs leading-5 text-white/60">
               Improve your performance with personalized coaching plans.
             </p>

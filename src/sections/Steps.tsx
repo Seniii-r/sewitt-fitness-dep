@@ -96,6 +96,7 @@ export default function Steps() {
   ]
 
   return (
+    <section id="plan">
     <div className="min-h-dvh bg-[#0B0B0C] text-white">
       <Timeline
         data={data}
@@ -104,5 +105,6 @@ export default function Steps() {
         className="bg-[#0B0B0C]"
       />
     </div>
+    </section>
   )
 }
