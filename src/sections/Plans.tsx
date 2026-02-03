@@ -70,33 +70,48 @@ export default function Plans() {
     idxRef.current = idx
   }, [idx])
 
-  // animation lock (prevents skipping multiple slides per fling)
+  // Disable transition briefly when we "snap" to startIdx on entry
+  const [skipAnim, setSkipAnim] = useState(false)
+
+  // Prevent spam switching while animating
   const animLockRef = useRef(false)
   const DURATION = 520
 
-  // page lock state
+  // Lock state
   const [locked, setLocked] = useState(false)
   const lockedRef = useRef(false)
   useEffect(() => {
     lockedRef.current = locked
   }, [locked])
 
-  // direction tracking for entry
-  const lastScrollYRef = useRef<number>(typeof window !== "undefined" ? window.scrollY : 0)
-  const lastDirRef = useRef<1 | -1>(1) // 1=down, -1=up
-
-  // prevents instant re-lock after we intentionally unlock to exit
+  // When we unlock intentionally to exit, don't instantly re-lock until section is not fully visible again
   const armedRef = useRef(true)
 
-  // smoother lock scheduling
-  const pendingLockRef = useRef(false)
+  // Track last scroll direction before locking
+  const lastScrollYRef = useRef<number>(typeof window !== "undefined" ? window.scrollY : 0)
+  const lastDirRef = useRef<1 | -1>(1)
 
-  // store scroll position while locked (iOS-safe locking)
+  // Full visibility tracking
+  const fullyVisibleRef = useRef(false)
+
+  // "Settle" timer so we lock AFTER momentum ends (prevents iOS flash)
+  const settleTimerRef = useRef<number | null>(null)
+  const SETTLE_MS = 140
+
+  // Mode: hard lock for desktop, soft lock for mobile (coarse pointer)
+  const isCoarsePointerRef = useRef(false)
+  useEffect(() => {
+    isCoarsePointerRef.current =
+      typeof window !== "undefined" &&
+      !!window.matchMedia &&
+      window.matchMedia("(hover: none) and (pointer: coarse)").matches
+  }, [])
+
+  // Hard-lock style backups (desktop)
   const savedScrollYRef = useRef(0)
-
-  // avoid layout jump when scrollbar disappears (desktop)
   const savedPaddingRightRef = useRef("")
   const savedScrollBehaviorRef = useRef("")
+  const usingHardLockRef = useRef(false)
 
   const getViewportH = () => window.visualViewport?.height ?? window.innerHeight ?? 1
   const tol = 28
@@ -108,39 +123,77 @@ export default function Plans() {
     return r.top >= -tol && r.bottom <= vh + tol
   }
 
+  const cancelSettle = () => {
+    if (settleTimerRef.current) {
+      window.clearTimeout(settleTimerRef.current)
+      settleTimerRef.current = null
+    }
+  }
+
+  const setStartIdxNoAnim = (startIdx: number) => {
+    setSkipAnim(true)
+    setIdx(startIdx)
+    idxRef.current = startIdx
+    requestAnimationFrame(() => setSkipAnim(false))
+  }
+
   const lockPage = () => {
     if (lockedRef.current) return
+    cancelSettle()
 
-    // kill smooth scrolling during lock/unlock so it doesn't "animate" and flicker
+    // stop smooth scrolling animations during lock/unlock
     savedScrollBehaviorRef.current = document.documentElement.style.scrollBehavior
     document.documentElement.style.scrollBehavior = "auto"
 
+    // reduce rubber-banding / scroll chaining
+    document.documentElement.style.overscrollBehavior = "none"
+    document.body.style.overscrollBehavior = "none"
+
+    const coarse = isCoarsePointerRef.current
+    usingHardLockRef.current = !coarse
+
+    // MOBILE (soft lock): do NOT touch body position. iOS flashes when you do.
+    if (coarse) {
+      setLocked(true)
+      return
+    }
+
+    // DESKTOP (hard lock): freeze body (works fine on desktop)
     const y = window.scrollY || 0
     savedScrollYRef.current = y
 
-    // compensate scrollbar (prevents horizontal jump)
+    // compensate scrollbar disappearing (prevents horizontal jump)
     const scrollBarW = window.innerWidth - document.documentElement.clientWidth
     const body = document.body
     savedPaddingRightRef.current = body.style.paddingRight
     if (scrollBarW > 0) body.style.paddingRight = `${scrollBarW}px`
 
-    // iOS-safe "freeze"
     body.style.position = "fixed"
     body.style.top = `-${y}px`
     body.style.left = "0"
     body.style.right = "0"
     body.style.width = "100%"
-    body.style.transform = "translateZ(0)" // compositor hint, reduces paint weirdness
-
-    // stop chaining/rubber-banding where supported
-    document.documentElement.style.overscrollBehavior = "none"
-    body.style.overscrollBehavior = "none"
 
     setLocked(true)
   }
 
   const unlockPage = () => {
     if (!lockedRef.current) return
+    cancelSettle()
+
+    document.documentElement.style.overscrollBehavior = ""
+    document.body.style.overscrollBehavior = ""
+
+    // restore scroll behavior (after everything)
+    const restoreScrollBehavior = () => {
+      document.documentElement.style.scrollBehavior = savedScrollBehaviorRef.current || ""
+    }
+
+    if (!usingHardLockRef.current) {
+      setLocked(false)
+      restoreScrollBehavior()
+      return
+    }
 
     const body = document.body
     const y = savedScrollYRef.current
@@ -150,19 +203,18 @@ export default function Plans() {
     body.style.left = ""
     body.style.right = ""
     body.style.width = ""
-    body.style.transform = ""
-
-    // restore scrollbar compensation
     body.style.paddingRight = savedPaddingRightRef.current
 
-    document.documentElement.style.overscrollBehavior = ""
-    body.style.overscrollBehavior = ""
-
-    // restore scroll behavior AFTER we jump back
+    // jump back to the same scroll position
     window.scrollTo(0, y)
-    document.documentElement.style.scrollBehavior = savedScrollBehaviorRef.current || ""
 
     setLocked(false)
+    restoreScrollBehavior()
+  }
+
+  const unlockForExit = () => {
+    armedRef.current = false
+    unlockPage()
   }
 
   // safety cleanup
@@ -186,13 +238,7 @@ export default function Plans() {
     }, DURATION + 40)
   }
 
-  const unlockForExit = () => {
-    armedRef.current = false
-    pendingLockRef.current = false
-    unlockPage()
-  }
-
-  // detect "fully in view" + background fade + entry logic (with smoother lock)
+  // Main scroll watcher: direction, fade, fully-visible, settle-lock scheduling
   useEffect(() => {
     const onScroll = () => {
       if (!sectionRef.current) return
@@ -203,7 +249,7 @@ export default function Plans() {
         const r = el.getBoundingClientRect()
         const vh = getViewportH()
 
-        // track direction (only meaningful when not locked)
+        // direction tracking (only meaningful when not locked)
         if (!lockedRef.current) {
           const y = window.scrollY
           const dy = y - lastScrollYRef.current
@@ -216,37 +262,30 @@ export default function Plans() {
         const visibleRatio = clamp01(visiblePx / vh)
         setSectionFade(smoothstep(visibleRatio))
 
+        // fully visible?
         const fullyVisible = r.top >= -tol && r.bottom <= vh + tol
+        fullyVisibleRef.current = fullyVisible
 
-        // re-arm once we’re no longer fully visible
+        // re-arm once we're not fully visible anymore
         if (!fullyVisible) {
           armedRef.current = true
-          pendingLockRef.current = false
+          cancelSettle()
+          return
         }
 
-        // schedule a smooth lock only when fully visible + armed + not already locked
-        if (fullyVisible && armedRef.current && !lockedRef.current && !pendingLockRef.current) {
-          pendingLockRef.current = true
+        // If fully visible + armed + not locked:
+        // schedule lock only after scroll settles (prevents iOS "flash" while momentum is still moving)
+        if (fullyVisible && armedRef.current && !lockedRef.current) {
+          cancelSettle()
+          settleTimerRef.current = window.setTimeout(() => {
+            if (!armedRef.current) return
+            if (lockedRef.current) return
+            if (!isFullyVisibleNow()) return
 
-          // start card based on entry direction
-          const enteringDir = lastDirRef.current
-          const startIdx = enteringDir === 1 ? 0 : n - 1
-          setIdx(startIdx)
-          idxRef.current = startIdx
-
-          // delay lock until paint settles (reduces flicker)
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              if (!pendingLockRef.current) return
-              if (lockedRef.current) return
-              if (!armedRef.current) return
-              if (!isFullyVisibleNow()) {
-                pendingLockRef.current = false
-                return
-              }
-              lockPage()
-            })
-          })
+            const startIdx = lastDirRef.current === 1 ? 0 : n - 1
+            setStartIdxNoAnim(startIdx)
+            lockPage()
+          }, SETTLE_MS)
         }
       })
     }
@@ -258,24 +297,40 @@ export default function Plans() {
 
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
+      cancelSettle()
       window.removeEventListener("scroll", onScroll)
       window.removeEventListener("resize", onScroll)
       window.visualViewport?.removeEventListener("resize", onScroll)
     }
   }, [n])
 
-  // Wheel anywhere (desktop)
+  // Wheel (desktop): when locked -> slide; when fully visible but not locked -> lock+slide (no flicker)
   useEffect(() => {
     const onWheel = (e: WheelEvent) => {
-      if (!lockedRef.current) return
       if (Math.abs(e.deltaY) < 10) return
-
       const dir: 1 | -1 = e.deltaY > 0 ? 1 : -1
-      const cur = idxRef.current
 
+      // If not locked yet but section is fully visible, we can lock cleanly here too.
+      if (!lockedRef.current && fullyVisibleRef.current && armedRef.current) {
+        // If we're about to exit immediately, don't lock. Let the page scroll.
+        const startIdx = dir === 1 ? 0 : n - 1
+        if ((startIdx === 0 && dir === -1) || (startIdx === n - 1 && dir === 1)) return
+
+        setStartIdxNoAnim(startIdx)
+        lockPage()
+
+        if (e.cancelable) e.preventDefault()
+        step(dir)
+        return
+      }
+
+      if (!lockedRef.current) return
+
+      const cur = idxRef.current
       const atFirst = cur === 0
       const atLast = cur === n - 1
 
+      // Exit rules
       if ((atLast && dir === 1) || (atFirst && dir === -1)) {
         unlockForExit()
         return
@@ -289,48 +344,69 @@ export default function Plans() {
     return () => window.removeEventListener("wheel", onWheel as any)
   }, [n])
 
-  // Touch anywhere (mobile)
+  // Touch (mobile): soft-lock prevents flash; we consume touchmove while locked
   useEffect(() => {
     let startY = 0
     let lastY = 0
     let active = false
 
     const onTouchStart = (e: TouchEvent) => {
-      if (!lockedRef.current) return
       if (e.touches.length !== 1) return
+
+      // allow starting gesture if locked OR we're eligible to lock (fully visible)
+      if (!lockedRef.current && !(fullyVisibleRef.current && armedRef.current)) return
+
       active = true
       startY = e.touches[0]!.clientY
       lastY = startY
     }
 
     const onTouchMove = (e: TouchEvent) => {
-      if (!lockedRef.current || !active) return
+      if (!active) return
       if (e.touches.length !== 1) return
+
       lastY = e.touches[0]!.clientY
-
       const dy = lastY - startY
-      if (Math.abs(dy) < 8) return
+      if (Math.abs(dy) < 2) return
 
+      // finger up (dy < 0) => user wants to scroll DOWN => dir=1
       const dir: 1 | -1 = dy < 0 ? 1 : -1
+
+      // If not locked but we're eligible, lock now (soft lock on mobile)
+      if (!lockedRef.current && fullyVisibleRef.current && armedRef.current) {
+        const startIdx = dir === 1 ? 0 : n - 1
+
+        // If gesture is an immediate exit direction, don't lock. Let the page scroll.
+        if ((startIdx === 0 && dir === -1) || (startIdx === n - 1 && dir === 1)) {
+          active = false
+          return
+        }
+
+        setStartIdxNoAnim(startIdx)
+        lockPage()
+      }
+
+      if (!lockedRef.current) return
+
       const cur = idxRef.current
       const atFirst = cur === 0
       const atLast = cur === n - 1
 
+      // If this gesture should EXIT, unlock and allow native scroll (no preventDefault)
       if ((atLast && dir === 1) || (atFirst && dir === -1)) {
         unlockForExit()
         active = false
         return
       }
 
+      // Otherwise consume move to keep the page frozen (this is the actual lock)
       if (e.cancelable) e.preventDefault()
     }
 
     const onTouchEnd = () => {
-      if (!lockedRef.current || !active) {
-        active = false
-        return
-      }
+      if (!active) return
       active = false
+      if (!lockedRef.current) return
       if (animLockRef.current) return
 
       const dy = lastY - startY
@@ -353,7 +429,7 @@ export default function Plans() {
     }
   }, [n])
 
-  // (Optional) keyboard support
+  // keyboard support (desktop)
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (!lockedRef.current) return
@@ -364,23 +440,21 @@ export default function Plans() {
       const atLast = cur === n - 1
 
       if (e.key === "ArrowDown" || e.key === "PageDown" || e.key === " ") {
-        const dir: 1 | -1 = 1
         if (atLast) {
           unlockForExit()
           return
         }
         e.preventDefault()
-        step(dir)
+        step(1)
       }
 
       if (e.key === "ArrowUp" || e.key === "PageUp") {
-        const dir: 1 | -1 = -1
         if (atFirst) {
           unlockForExit()
           return
         }
         e.preventDefault()
-        step(dir)
+        step(-1)
       }
     }
 
@@ -438,11 +512,9 @@ export default function Plans() {
         </div>
 
         <div className="mx-auto mt-6 w-full">
-          {/* BLACK WINDOW (constant size) */}
+          {/* BLACK WINDOW */}
           <div
-            className={cn(
-              "relative mx-auto w-full overflow-hidden rounded-[32px] border border-black/10 bg-black shadow-sm"
-            )}
+            className={cn("relative mx-auto w-full overflow-hidden rounded-[32px] border border-black/10 bg-black shadow-sm")}
           >
             <div
               className="w-full"
@@ -458,7 +530,7 @@ export default function Plans() {
                   height: `${n * 100}%`,
                   gridTemplateRows: `repeat(${n}, minmax(0, 1fr))`,
                   transform: `translate3d(0, -${translatePct}%, 0)`,
-                  transition: `transform ${DURATION}ms ease-out`,
+                  transition: skipAnim ? "none" : `transform ${DURATION}ms ease-out`,
                   willChange: "transform",
                 }}
               >
