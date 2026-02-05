@@ -134,13 +134,13 @@ export default function Hero() {
       <div className="absolute inset-0 -z-10">
         <div className="absolute inset-0" style={{ backgroundColor: "rgba(11, 11, 12, 1)" }} />
         <div
-          className="absolute inset-0"
+          className="absolute sm:inset-0"
           style={{
             background: "radial-gradient(900px 480px at 20% 30%, rgba(233, 208, 80, 0.19), transparent 60%)",
           }}
         />
         <div
-          className="absolute inset-0"
+          className="absolute sm:inset-0"
           style={{
             background: "radial-gradient(700px 420px at 0% 0%, rgba(233, 208, 80, 0.19), transparent 62%)",
           }}
@@ -164,7 +164,7 @@ export default function Hero() {
               <button
                 type="button"
                 onClick={() => setMenuOpen((v) => !v)}
-                className="inline-flex items-center justify-center rounded-full border px-4 py-2 text-xs font-semibold backdrop-blur-md"
+                className="inline-flex items-center justify-center border px-4 py-2 text-xs font-semibold backdrop-blur-md"
                 style={{
                   color: BRAND.smoke,
                   borderColor: "rgba(245,245,242,0.18)",
@@ -220,18 +220,73 @@ export default function Hero() {
           <div className="w-full">
             <div className="grid w-full items-start gap-10 lg:grid-cols-[1.05fr_0.95fr]">
               <div className="max-w-2xl">
-                <h1 className="leading-[0.82] tracking-tight" style={{ color: BRAND.smoke }}>
-                  <span
-                    className="block text-5xl sm:text-6xl md:text-9xl"
-                    style={{
-                      fontWeight: 800,
-                      letterSpacing: "0.15em",
-                    }}
-                  >
-                    SEWITT.
-                    <span className="block text-5xl sm:text-6xl md:text-9xl">FITNESS</span>
-                  </span>
-                </h1>
+                {/* ✅ MOBILE ONLY: H1 ABOVE IMAGE */}
+                <div className="lg:hidden">
+                  <h1 className="leading-[0.82] tracking-tight" style={{ color: BRAND.smoke }}>
+                    <span
+                      className="block text-5xl sm:text-6xl md:text-9xl"
+                      style={{
+                        fontWeight: 800,
+                        letterSpacing: "0.15em",
+                      }}
+                    >
+                      SEWITT.
+                      <span className="block text-5xl sm:text-6xl md:text-9xl">FITNESS</span>
+                    </span>
+                  </h1>
+
+                  {/* ✅ MOBILE ONLY: IMAGE + BUTTON ON IMAGE (gold overlay removed) */}
+                  <div className="relative mt-6 w-full overflow-hidden">
+                    <img
+                      src="/img/hero1.jpeg"
+                      alt="Sewitt"
+                      className="h-[340px] w-full object-cover sm:h-[520px]"
+                      style={{ backgroundColor: "rgba(11, 11, 12, 1)" }}
+                    />
+
+                    {/* Bottom dark fade (keeps readability) */}
+                    <div
+                      className="pointer-events-none absolute inset-x-0 bottom-0 h-32"
+                      style={{
+                        background: "linear-gradient(to top, rgba(11,11,12,0.85), transparent)",
+                      }}
+                    />
+
+                    {/* CTA ON IMAGE */}
+                    <a
+                      href="https://calendly.com/sewitt-fitness-calendly/30min?"
+                      target="_blank"
+                      rel="noopener noreferer"
+                      className={[
+                        "absolute left-1/2 -translate-x-1/2 z-10",
+                        "bottom-5",
+                        "inline-flex items-center justify-center",
+                        "px-3 py-1 text-sm sm:text-m font-semibold",
+                        "transition-all active:scale-[0.99]",
+                        "bg-white/10 text-[#F5F5F2] text-center border border-white/15 backdrop-blur-md",
+                        "hover:bg-[#C1121F]/15 hover:border-[#C1121F]/40 hover:shadow-[0_18px_60px_rgba(193,18,31,0.45)]",
+                      ].join(" ")}
+                    >
+                      Book Free Intro <br></br>Session
+                    </a>
+                  </div>
+                </div>
+
+                {/* ✅ DESKTOP ONLY: original H1 stays where it was */}
+                <div className="hidden lg:block">
+                  <h1 className="leading-[0.82] tracking-tight" style={{ color: BRAND.smoke }}>
+                    <span
+                      className="block text-5xl sm:text-6xl md:text-9xl"
+                      style={{
+                        fontWeight: 800,
+                        letterSpacing: "0.15em",
+                      }}
+                    >
+                      SEWITT.
+                      <span className="block text-5xl sm:text-6xl md:text-9xl">FITNESS</span>
+                    </span>
+                  </h1>
+                </div>
 
                 <h2 className="mt-6 text-2xl font-semibold leading-[1.06] sm:text-4xl" style={{ color: BRAND.smoke }}>
                   A complete coaching experience, not just workouts.
@@ -285,7 +340,8 @@ export default function Hero() {
                 </div>
               </div>
 
-              <div className="flex justify-center lg:justify-end">
+              {/* ✅ DESKTOP ONLY (unchanged): image + button overlay */}
+              <div className="hidden justify-center lg:flex lg:justify-end">
                 <div className="relative w-full max-w-[720px]">
                   <img
                     src="/img/hero1.jpeg"

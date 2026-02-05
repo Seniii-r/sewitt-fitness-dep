@@ -28,16 +28,39 @@ const plans = [
 const clamp01 = (n: number) => Math.min(1, Math.max(0, n))
 const smoothstep = (t: number) => t * t * (3 - 2 * t)
 
-function PlanCard({ plan }: { plan: (typeof plans)[number] }) {
+function PlanCard({
+  plan,
+  hint,
+}: {
+  plan: (typeof plans)[number]
+  hint?: string | null
+}) {
   return (
-    <div className="grid h-full gap-4 p-5 sm:p-8 md:grid-cols-[1fr_1fr] md:items-center md:gap-8">
-      <div className="overflow-hidden rounded-3xl bg-white/5">
+    // content-start prevents grid rows from stretching and creating the "image got cut / black gap" look on mobile
+    <div className="grid h-full content-start gap-4 p-5 sm:p-8 md:grid-cols-[1fr_1fr] md:items-center md:content-center md:gap-8">
+      <div className="relative overflow-hidden rounded-3xl bg-white/5">
         <img
           src={plan.img}
           alt=""
-          className="h-48 w-full object-cover sm:h-64 md:h-[420px] md:w-full"
+          className="h-56 w-full object-cover object-bottom sm:h-64 sm:object-center md:h-[420px] md:w-full"
           draggable={false}
         />
+
+{/* Swipe hint overlay (mobile only, blended, not a button) */}
+{hint ? (
+  <div className="pointer-events-none absolute left-1/2 bottom-5 z-10 -translate-x-1/2 md:hidden">
+    <div className="swipeHintFloat flex flex-col items-center">
+      <div className="text-[11px] font-semibold tracking-[0.22em] text-white/85 drop-shadow-[0_2px_10px_rgba(0,0,0,0.75)]">
+        SWIPE UP
+      </div>
+      <div className="mt-1 text-lg leading-none text-white/85 drop-shadow-[0_2px_10px_rgba(0,0,0,0.75)]">
+        ↓
+      </div>
+    </div>
+  </div>
+) : null}
+
+
       </div>
 
       <div className="grid gap-3 text-white">
@@ -107,6 +130,32 @@ export default function Plans() {
       window.matchMedia("(hover: none) and (pointer: coarse)").matches
   }, [])
 
+  // Swipe hint (mobile only)
+  const [showSwipeHint, setShowSwipeHint] = useState(false)
+  const hintShownRef = useRef(false)
+  const hintTimerRef = useRef<number | null>(null)
+
+  const showHintOnce = () => {
+    if (!isCoarsePointerRef.current) return
+    if (hintShownRef.current) return
+    hintShownRef.current = true
+
+    setShowSwipeHint(true)
+    if (hintTimerRef.current) window.clearTimeout(hintTimerRef.current)
+    hintTimerRef.current = window.setTimeout(() => {
+      setShowSwipeHint(false)
+      hintTimerRef.current = null
+    }, 2200)
+  }
+
+  const hideHint = () => {
+    setShowSwipeHint(false)
+    if (hintTimerRef.current) {
+      window.clearTimeout(hintTimerRef.current)
+      hintTimerRef.current = null
+    }
+  }
+
   // Hard-lock style backups (desktop)
   const savedScrollYRef = useRef(0)
   const savedPaddingRightRef = useRef("")
@@ -141,28 +190,26 @@ export default function Plans() {
     if (lockedRef.current) return
     cancelSettle()
 
-    // stop smooth scrolling animations during lock/unlock
     savedScrollBehaviorRef.current = document.documentElement.style.scrollBehavior
     document.documentElement.style.scrollBehavior = "auto"
 
-    // reduce rubber-banding / scroll chaining
     document.documentElement.style.overscrollBehavior = "none"
     document.body.style.overscrollBehavior = "none"
 
     const coarse = isCoarsePointerRef.current
     usingHardLockRef.current = !coarse
 
-    // MOBILE (soft lock): do NOT touch body position. iOS flashes when you do.
+    // MOBILE (soft lock): don’t mess with body position (that’s where iOS flashes come from)
     if (coarse) {
       setLocked(true)
+      showHintOnce()
       return
     }
 
-    // DESKTOP (hard lock): freeze body (works fine on desktop)
+    // DESKTOP (hard lock)
     const y = window.scrollY || 0
     savedScrollYRef.current = y
 
-    // compensate scrollbar disappearing (prevents horizontal jump)
     const scrollBarW = window.innerWidth - document.documentElement.clientWidth
     const body = document.body
     savedPaddingRightRef.current = body.style.paddingRight
@@ -180,11 +227,11 @@ export default function Plans() {
   const unlockPage = () => {
     if (!lockedRef.current) return
     cancelSettle()
+    hideHint()
 
     document.documentElement.style.overscrollBehavior = ""
     document.body.style.overscrollBehavior = ""
 
-    // restore scroll behavior (after everything)
     const restoreScrollBehavior = () => {
       document.documentElement.style.scrollBehavior = savedScrollBehaviorRef.current || ""
     }
@@ -205,7 +252,6 @@ export default function Plans() {
     body.style.width = ""
     body.style.paddingRight = savedPaddingRightRef.current
 
-    // jump back to the same scroll position
     window.scrollTo(0, y)
 
     setLocked(false)
@@ -217,7 +263,6 @@ export default function Plans() {
     unlockPage()
   }
 
-  // safety cleanup
   useEffect(() => {
     return () => unlockPage()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -228,6 +273,8 @@ export default function Plans() {
     const cur = idxRef.current
     const next = Math.min(n - 1, Math.max(0, cur + dir))
     if (next === cur) return
+
+    hideHint() // hide hint as soon as they successfully navigate
 
     setIdx(next)
     idxRef.current = next
@@ -249,7 +296,6 @@ export default function Plans() {
         const r = el.getBoundingClientRect()
         const vh = getViewportH()
 
-        // direction tracking (only meaningful when not locked)
         if (!lockedRef.current) {
           const y = window.scrollY
           const dy = y - lastScrollYRef.current
@@ -257,24 +303,19 @@ export default function Plans() {
           lastScrollYRef.current = y
         }
 
-        // background fade
         const visiblePx = Math.min(vh, Math.max(0, r.bottom)) - Math.max(0, r.top)
         const visibleRatio = clamp01(visiblePx / vh)
         setSectionFade(smoothstep(visibleRatio))
 
-        // fully visible?
         const fullyVisible = r.top >= -tol && r.bottom <= vh + tol
         fullyVisibleRef.current = fullyVisible
 
-        // re-arm once we're not fully visible anymore
         if (!fullyVisible) {
           armedRef.current = true
           cancelSettle()
           return
         }
 
-        // If fully visible + armed + not locked:
-        // schedule lock only after scroll settles (prevents iOS "flash" while momentum is still moving)
         if (fullyVisible && armedRef.current && !lockedRef.current) {
           cancelSettle()
           settleTimerRef.current = window.setTimeout(() => {
@@ -304,15 +345,13 @@ export default function Plans() {
     }
   }, [n])
 
-  // Wheel (desktop): when locked -> slide; when fully visible but not locked -> lock+slide (no flicker)
+  // Wheel (desktop)
   useEffect(() => {
     const onWheel = (e: WheelEvent) => {
       if (Math.abs(e.deltaY) < 10) return
       const dir: 1 | -1 = e.deltaY > 0 ? 1 : -1
 
-      // If not locked yet but section is fully visible, we can lock cleanly here too.
       if (!lockedRef.current && fullyVisibleRef.current && armedRef.current) {
-        // If we're about to exit immediately, don't lock. Let the page scroll.
         const startIdx = dir === 1 ? 0 : n - 1
         if ((startIdx === 0 && dir === -1) || (startIdx === n - 1 && dir === 1)) return
 
@@ -330,7 +369,6 @@ export default function Plans() {
       const atFirst = cur === 0
       const atLast = cur === n - 1
 
-      // Exit rules
       if ((atLast && dir === 1) || (atFirst && dir === -1)) {
         unlockForExit()
         return
@@ -344,7 +382,7 @@ export default function Plans() {
     return () => window.removeEventListener("wheel", onWheel as any)
   }, [n])
 
-  // Touch (mobile): soft-lock prevents flash; we consume touchmove while locked
+  // Touch (mobile)
   useEffect(() => {
     let startY = 0
     let lastY = 0
@@ -352,10 +390,7 @@ export default function Plans() {
 
     const onTouchStart = (e: TouchEvent) => {
       if (e.touches.length !== 1) return
-
-      // allow starting gesture if locked OR we're eligible to lock (fully visible)
       if (!lockedRef.current && !(fullyVisibleRef.current && armedRef.current)) return
-
       active = true
       startY = e.touches[0]!.clientY
       lastY = startY
@@ -369,19 +404,14 @@ export default function Plans() {
       const dy = lastY - startY
       if (Math.abs(dy) < 2) return
 
-      // finger up (dy < 0) => user wants to scroll DOWN => dir=1
       const dir: 1 | -1 = dy < 0 ? 1 : -1
 
-      // If not locked but we're eligible, lock now (soft lock on mobile)
       if (!lockedRef.current && fullyVisibleRef.current && armedRef.current) {
         const startIdx = dir === 1 ? 0 : n - 1
-
-        // If gesture is an immediate exit direction, don't lock. Let the page scroll.
         if ((startIdx === 0 && dir === -1) || (startIdx === n - 1 && dir === 1)) {
           active = false
           return
         }
-
         setStartIdxNoAnim(startIdx)
         lockPage()
       }
@@ -392,14 +422,12 @@ export default function Plans() {
       const atFirst = cur === 0
       const atLast = cur === n - 1
 
-      // If this gesture should EXIT, unlock and allow native scroll (no preventDefault)
       if ((atLast && dir === 1) || (atFirst && dir === -1)) {
         unlockForExit()
         active = false
         return
       }
 
-      // Otherwise consume move to keep the page frozen (this is the actual lock)
       if (e.cancelable) e.preventDefault()
     }
 
@@ -464,6 +492,9 @@ export default function Plans() {
 
   const translatePct = (idx * 100) / n
 
+  // show hint only on mobile, only while locked, only on first card
+  const hintText = locked && showSwipeHint && idx === 0 ? "Swipe up" : null
+
   return (
     <section
       id="plans"
@@ -471,6 +502,20 @@ export default function Plans() {
       className="relative isolate h-[100svh] w-full overflow-hidden"
       style={{ background: "#F5F5F2" }}
     >
+      <style>{`
+  @keyframes swipeHintFloat {
+    0%   { opacity: 0;   transform: translate3d(0, 10px, 0) scale(0.98); }
+    22%  { opacity: .85; transform: translate3d(0, 2px, 0)  scale(1); }
+    55%  { opacity: .85; transform: translate3d(0, -8px, 0) scale(1.02); }
+    100% { opacity: 0;   transform: translate3d(0, -18px, 0) scale(1.02); }
+  }
+
+  .swipeHintFloat {
+    animation: swipeHintFloat 1.55s ease-in-out infinite;
+    will-change: transform, opacity;
+  }
+`}</style>
+
       {/* BACKGROUND + GLOW */}
       <div
         className="pointer-events-none fixed inset-0 z-0 transition-opacity duration-700 ease-out"
@@ -502,10 +547,7 @@ export default function Plans() {
       <div className="relative z-10 mx-auto flex h-full max-w-6xl flex-col justify-center px-4 py-8 sm:px-6 sm:py-12">
         <div className="mx-auto text-center text-black" style={{ opacity: sectionFade }}>
           <h1 className="leading-[0.82] tracking-tight text-current">
-            <span
-              className="block text-3xl sm:text-4xl md:text-5xl"
-              style={{ fontWeight: 800, letterSpacing: "0.15em" }}
-            >
+            <span className="block text-3xl sm:text-4xl md:text-5xl" style={{ fontWeight: 800, letterSpacing: "0.15em" }}>
               COACHING EXPERIENCE
             </span>
           </h1>
@@ -513,9 +555,7 @@ export default function Plans() {
 
         <div className="mx-auto mt-6 w-full">
           {/* BLACK WINDOW */}
-          <div
-            className={cn("relative mx-auto w-full overflow-hidden rounded-[32px] border border-black/10 bg-black shadow-sm")}
-          >
+          <div className={cn("relative mx-auto w-full overflow-hidden rounded-[32px] border border-black/10 bg-black shadow-sm")}>
             <div
               className="w-full"
               style={{
@@ -536,7 +576,7 @@ export default function Plans() {
               >
                 {plans.map((p, i) => (
                   <div key={i} className="h-full">
-                    <PlanCard plan={p} />
+                    <PlanCard plan={p} hint={i === idx ? hintText : null} />
                   </div>
                 ))}
               </div>
