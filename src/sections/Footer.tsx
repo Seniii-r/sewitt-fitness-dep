@@ -18,10 +18,11 @@ export default function Footer() {
           <div className="md:justify-self-end">
             <div className="text-xs font-medium text-white/80">Sections</div>
             <div className="mt-3 grid gap-2 text-xs">
-              <a href="#" className="hover:text-white">About</a>
-              <a href="#" className="hover:text-white">Coaching</a>
-              <a href="#" className="hover:text-white">Reviews</a>
-              <a href="#contact" className="hover:text-white">Contact</a>
+              <a href="#home" className="hover:text-white">Home</a>
+              <a href="#coach" className="hover:text-white">About</a>
+              <a href="#plans" className="hover:text-white">Coaching experience</a>
+              <a href="#testimonials" className="hover:text-white">Testamonials</a>
+              <a href="#FAQ" className="hover:text-white">FAQ</a>
             </div>
           </div>
 

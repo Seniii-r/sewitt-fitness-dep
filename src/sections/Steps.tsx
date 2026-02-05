@@ -78,7 +78,9 @@ export default function Steps() {
           {/* ✅ Center-bottom, responsive */}
           <div className="relative mt-10 flex justify-center pb-1 sm:pb-2 sm:right-40">
             <a
-              href="#contact"
+              href="https://calendly.com/sewitt-fitness-calendly/30min?"
+              target="_blank"
+              rel="noopener noreferer"
               className={[
                 "inline-flex items-center justify-center",
                 "px-6 sm:px-10 py-3 text-base sm:text-lg font-semibold",

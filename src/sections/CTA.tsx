@@ -45,7 +45,9 @@ export default function CTA() {
 
           <div className="mt-8 flex justify-center">
             <a
-              href="#contact"
+              href="https://calendly.com/sewitt-fitness-calendly/30min?"
+              target="_blank"
+              rel="noopener noreferer"
               onMouseEnter={() => setHovered(true)}
               onMouseLeave={() => setHovered(false)}
               className={[

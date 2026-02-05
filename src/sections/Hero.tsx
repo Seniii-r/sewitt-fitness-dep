@@ -21,10 +21,10 @@ export default function Hero() {
     () => [
       { label: "Home", href: "#home" },
       { label: "Coaching Experience", href: "#plans" },
-      { label: "How it Works", href: "#steps" },
+      { label: "How it Works", href: "#plan" },
       { label: "Testimonials", href: "#testimonials" },
-      { label: "About", href: "#about" },
-      { label: "FAQ", href: "#faq" },
+      { label: "About", href: "#coach" },
+      { label: "FAQ", href: "#FAQ" },
     ],
     []
   )
@@ -203,7 +203,7 @@ export default function Hero() {
 
             {/* Top-right CTA */}
             <a
-              href="#contact"
+              href="#plan"
               className="inline-flex items-center gap-3 px-3 py-2 text-xs font-semibold shadow-lg transition-transform hover:scale-[1.01] sm:px-4 sm:text-sm"
               style={{
                 backgroundColor: BRAND.red,
@@ -302,7 +302,9 @@ export default function Hero() {
                   />
 
                   <a
-                    href="#contact"
+                    href="https://calendly.com/sewitt-fitness-calendly/30min?"
+                    target="_blank"
+                    rel="noopener noreferer"
                     className={[
                       "absolute left-1/2 -translate-x-1/2",
                       "bottom-5 sm:bottom-7",

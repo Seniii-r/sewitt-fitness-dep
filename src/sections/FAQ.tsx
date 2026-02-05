@@ -90,7 +90,7 @@ export default function FAQ() {
   }, [])
 
   return (
-    <section ref={sectionRef as any} className="relative isolate w-full" style={{ backgroundColor: PAGE_BLACK }}>
+    <section id="FAQ" ref={sectionRef as any} className="relative isolate w-full" style={{ backgroundColor: PAGE_BLACK }}>
       {/* BACKGROUND + RED GLOW (FAQ) */}
       <div
         className="pointer-events-none fixed inset-0 z-0 transition-opacity duration-700 ease-out"
