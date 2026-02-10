@@ -160,7 +160,7 @@ export default function Hero() {
             </nav>
 
             {/* ✅ Mobile menu button */}
-            <div className="relative md:hidden">
+            <div className="relative z-50 md:hidden">
               <button
                 type="button"
                 onClick={() => setMenuOpen((v) => !v)}

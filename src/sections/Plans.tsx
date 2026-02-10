@@ -46,21 +46,19 @@ function PlanCard({
           draggable={false}
         />
 
-{/* Swipe hint overlay (mobile only, blended, not a button) */}
-{hint ? (
-  <div className="pointer-events-none absolute left-1/2 bottom-5 z-10 -translate-x-1/2 md:hidden">
-    <div className="swipeHintFloat flex flex-col items-center">
-      <div className="text-[11px] font-semibold tracking-[0.22em] text-white/85 drop-shadow-[0_2px_10px_rgba(0,0,0,0.75)]">
-        SWIPE UP
-      </div>
-      <div className="mt-1 text-lg leading-none text-white/85 drop-shadow-[0_2px_10px_rgba(0,0,0,0.75)]">
-        ↓
-      </div>
-    </div>
-  </div>
-) : null}
-
-
+        {/* Swipe hint overlay (mobile only, blended, not a button) */}
+        {hint ? (
+          <div className="pointer-events-none absolute left-1/2 bottom-5 z-10 -translate-x-1/2 md:hidden">
+            <div className="swipeHintFloat flex flex-col items-center">
+              <div className="text-[11px] font-semibold tracking-[0.22em] text-white/85 drop-shadow-[0_2px_10px_rgba(0,0,0,0.75)]">
+                SWIPE UP
+              </div>
+              <div className="mt-1 text-lg leading-none text-white/85 drop-shadow-[0_2px_10px_rgba(0,0,0,0.75)]">
+                ↓
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <div className="grid gap-3 text-white">
@@ -165,11 +163,12 @@ export default function Plans() {
   const getViewportH = () => window.visualViewport?.height ?? window.innerHeight ?? 1
   const tol = 28
 
+  // ✅ "Fully visible" should mean: the section covers the viewport (prevents early lock on mobile)
   const isFullyVisibleNow = () => {
     if (!sectionRef.current) return false
     const r = sectionRef.current.getBoundingClientRect()
     const vh = getViewportH()
-    return r.top >= -tol && r.bottom <= vh + tol
+    return r.top <= tol && r.bottom >= vh - tol
   }
 
   const cancelSettle = () => {
@@ -307,7 +306,8 @@ export default function Plans() {
         const visibleRatio = clamp01(visiblePx / vh)
         setSectionFade(smoothstep(visibleRatio))
 
-        const fullyVisible = r.top >= -tol && r.bottom <= vh + tol
+        // ✅ cover-viewport check (prevents early lock / overlap)
+        const fullyVisible = r.top <= tol && r.bottom >= vh - tol
         fullyVisibleRef.current = fullyVisible
 
         if (!fullyVisible) {
@@ -499,26 +499,26 @@ export default function Plans() {
     <section
       id="plans"
       ref={sectionRef as any}
-      className="relative isolate h-[100svh] w-full overflow-hidden"
+      className="relative isolate min-h-[100svh] h-[100dvh] w-full overflow-hidden"
       style={{ background: "#F5F5F2" }}
     >
       <style>{`
-  @keyframes swipeHintFloat {
-    0%   { opacity: 0;   transform: translate3d(0, 10px, 0) scale(0.98); }
-    22%  { opacity: .85; transform: translate3d(0, 2px, 0)  scale(1); }
-    55%  { opacity: .85; transform: translate3d(0, -8px, 0) scale(1.02); }
-    100% { opacity: 0;   transform: translate3d(0, -18px, 0) scale(1.02); }
-  }
+        @keyframes swipeHintFloat {
+          0%   { opacity: 0;   transform: translate3d(0, 10px, 0) scale(0.98); }
+          22%  { opacity: .85; transform: translate3d(0, 2px, 0)  scale(1); }
+          55%  { opacity: .85; transform: translate3d(0, -8px, 0) scale(1.02); }
+          100% { opacity: 0;   transform: translate3d(0, -18px, 0) scale(1.02); }
+        }
 
-  .swipeHintFloat {
-    animation: swipeHintFloat 1.55s ease-in-out infinite;
-    will-change: transform, opacity;
-  }
-`}</style>
+        .swipeHintFloat {
+          animation: swipeHintFloat 1.55s ease-in-out infinite;
+          will-change: transform, opacity;
+        }
+      `}</style>
 
       {/* BACKGROUND + GLOW */}
       <div
-        className="pointer-events-none fixed inset-0 z-0 transition-opacity duration-700 ease-out"
+        className="pointer-events-none absolute inset-0 z-0 transition-opacity duration-700 ease-out"
         style={{ opacity: sectionFade }}
         aria-hidden="true"
       >
@@ -547,7 +547,10 @@ export default function Plans() {
       <div className="relative z-10 mx-auto flex h-full max-w-6xl flex-col justify-center px-4 py-8 sm:px-6 sm:py-12">
         <div className="mx-auto text-center text-black" style={{ opacity: sectionFade }}>
           <h1 className="leading-[0.82] tracking-tight text-current">
-            <span className="block text-3xl sm:text-4xl md:text-5xl" style={{ fontWeight: 800, letterSpacing: "0.15em" }}>
+            <span
+              className="block text-3xl sm:text-4xl md:text-5xl"
+              style={{ fontWeight: 800, letterSpacing: "0.15em" }}
+            >
               COACHING EXPERIENCE
             </span>
           </h1>

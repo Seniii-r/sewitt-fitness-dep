@@ -41,24 +41,59 @@ const smoothstep = (t: number) => t * t * (3 - 2 * t)
 export default function Testimonials() {
   const sectionRef = useRef<HTMLElement | null>(null)
 
-  const [fade, setFade] = useState(0)
+  // ✅ detect mobile (coarse pointer)
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return false
+    return window.matchMedia("(hover: none) and (pointer: coarse)").matches
+  })
+
+  // ✅ mobile should never fade, desktop keeps existing fade behavior
+  const [fade, setFade] = useState(() => (isMobile ? 1 : 0))
   const [sectionFade, setSectionFade] = useState(0)
 
   const rafRef = useRef<number | null>(null)
 
   useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return
+
+    const mq = window.matchMedia("(hover: none) and (pointer: coarse)")
+    const onChange = () => setIsMobile(mq.matches)
+
+    // modern
+    mq.addEventListener?.("change", onChange)
+    // older safari
+    // @ts-ignore
+    mq.addListener?.(onChange)
+
+    return () => {
+      mq.removeEventListener?.("change", onChange)
+      // @ts-ignore
+      mq.removeListener?.(onChange)
+    }
+  }, [])
+
+  useEffect(() => {
     const el = sectionRef.current
     if (!el) return
 
-    const thresholds = Array.from({ length: 31 }, (_, i) => i / 30)
+    let obs: IntersectionObserver | null = null
 
-    const obs = new IntersectionObserver(([entry]) => {
-      const r = clamp01(entry.intersectionRatio)
-      setFade(smoothstep(r))
-    }, { threshold: thresholds })
+    // ✅ MOBILE: lock opacity at 1 and do NOT run the fade observer
+    if (isMobile) {
+      setFade(1)
+    } else {
+      const thresholds = Array.from({ length: 31 }, (_, i) => i / 30)
+      obs = new IntersectionObserver(
+        ([entry]) => {
+          const r = clamp01(entry.intersectionRatio)
+          setFade(smoothstep(r))
+        },
+        { threshold: thresholds }
+      )
+      obs.observe(el)
+    }
 
-    obs.observe(el)
-
+    // background glow fade stays as-is
     const onScroll = () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
       rafRef.current = requestAnimationFrame(() => {
@@ -75,19 +110,22 @@ export default function Testimonials() {
     window.addEventListener("resize", onScroll)
 
     return () => {
-      obs.disconnect()
+      obs?.disconnect()
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
       window.removeEventListener("scroll", onScroll)
       window.removeEventListener("resize", onScroll)
     }
-  }, [])
+  }, [isMobile])
 
   return (
     <section
       id="testimonials"
       ref={sectionRef as any}
-      className="relative isolate overflow-hidden transition-opacity duration-500 ease-out"
-      style={{ opacity: fade, minHeight: "100vh", background: "#F5F5F2" }}
+      className={[
+        "relative isolate overflow-hidden",
+        isMobile ? "" : "transition-opacity duration-500 ease-out",
+      ].join(" ")}
+      style={{ opacity: isMobile ? 1 : fade, minHeight: "100vh", background: "#F5F5F2" }}
     >
       {/* BACKGROUND + GLOW */}
       <div
@@ -125,7 +163,6 @@ export default function Testimonials() {
             ))}
           </div>
 
-          {/* TITLE (replaced) */}
           <div className="mt-6">
             <h1 className="leading-[0.82] tracking-tight text-current">
               <span

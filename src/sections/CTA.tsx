@@ -1,5 +1,6 @@
 // src/sections/CTA.tsx
 import { useRef, useState, useEffect } from "react"
+import LiquidEther from "../components/LiquidEther"
 
 const PAGE_BLACK = "#0B0B0C"
 
@@ -15,6 +16,31 @@ export default function CTA() {
   return (
     <section ref={ref as any} className="relative isolate w-full" style={{ backgroundColor: PAGE_BLACK }}>
       {/* Background image */}
+      <LiquidEther
+                colors={["#E9D050", "#E9D050", "#E9D050"]}
+                mouseForce={20}
+                cursorSize={100}
+                isViscous={false}
+                viscous={30}
+                iterationsViscous={32}
+                iterationsPoisson={32}
+                resolution={0.5}
+                isBounce={false}
+                autoDemo={true}
+                autoSpeed={0.5}
+                autoIntensity={2.2}
+                takeoverDuration={0.25}
+                autoResumeDelay={3000}
+                autoRampDuration={0.6}
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  width: "100%",
+                  height: "100%",
+                  opacity: 0.55,
+                }}
+              />
+
       <div className="absolute inset-0 -z-10" style={{ backgroundColor: PAGE_BLACK }}>
         <img
           src={hovered ? "/img/footer.jpeg" : "/img/footer2.jpeg"}
