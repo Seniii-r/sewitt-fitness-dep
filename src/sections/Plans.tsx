@@ -37,12 +37,12 @@ function PlanCard({
 }) {
   return (
     // content-start prevents grid rows from stretching and creating the "image got cut / black gap" look on mobile
-    <div className="grid h-full content-start gap-4 p-5 sm:p-8 md:grid-cols-[1fr_1fr] md:items-center md:content-center md:gap-8">
-      <div className="relative overflow-hidden rounded-3xl bg-white/5">
+    <div className="grid h-full content-start gap-3 p-4 sm:p-6 md:grid-cols-[1fr_1fr] md:items-center md:content-center md:gap-6 md:p-5">
+      <div className="relative overflow-hidden rounded-2xl bg-white/5">
         <img
           src={plan.img}
           alt=""
-          className="h-56 w-full object-cover object-bottom sm:h-64 sm:object-center md:h-[420px] md:w-full"
+          className="h-48 w-full object-cover object-bottom sm:h-56 sm:object-center md:h-[280px] md:w-full"
           draggable={false}
         />
 
@@ -61,10 +61,10 @@ function PlanCard({
         ) : null}
       </div>
 
-      <div className="grid gap-3 text-white">
+      <div className="grid gap-2 text-white">
         {plan.tag ? <div className="text-xs text-white/60 sm:text-sm">{plan.tag}</div> : null}
 
-        <div className="text-lg font-semibold leading-snug tracking-tight sm:text-2xl md:text-3xl">
+        <div className="text-base font-semibold leading-snug tracking-tight sm:text-xl md:text-2xl">
           {plan.title}
         </div>
 
@@ -117,7 +117,7 @@ export default function Plans() {
 
   // "Settle" timer so we lock AFTER momentum ends (prevents iOS flash)
   const settleTimerRef = useRef<number | null>(null)
-  const SETTLE_MS = 140
+  const SETTLE_MS = 100
 
   // Mode: hard lock for desktop, soft lock for mobile (coarse pointer)
   const isCoarsePointerRef = useRef(false)
@@ -161,7 +161,8 @@ export default function Plans() {
   const usingHardLockRef = useRef(false)
 
   const getViewportH = () => window.visualViewport?.height ?? window.innerHeight ?? 1
-  const tol = 28
+  // Tolerance for "section covers viewport": allow a few px so we lock reliably when section is in view
+  const tol = 40
 
   // ✅ "Fully visible" should mean: the section covers the viewport (prevents early lock on mobile)
   const isFullyVisibleNow = () => {
@@ -223,7 +224,7 @@ export default function Plans() {
     setLocked(true)
   }
 
-  const unlockPage = () => {
+  const unlockPage = (exitDirection?: 1 | -1) => {
     if (!lockedRef.current) return
     cancelSettle()
     hideHint()
@@ -242,7 +243,20 @@ export default function Plans() {
     }
 
     const body = document.body
-    const y = savedScrollYRef.current
+    let scrollToY = savedScrollYRef.current
+
+    // Smooth exit: scroll so next section (or Hero) is in view when unlocking.
+    // While locked, body is fixed so rect is viewport-relative; we need document scroll position.
+    if (sectionRef.current && exitDirection !== undefined) {
+      const rect = sectionRef.current.getBoundingClientRect()
+      if (exitDirection === 1) {
+        // Exiting down: scroll so section bottom is at viewport top → next section visible
+        scrollToY = window.scrollY + rect.bottom
+      } else {
+        // Exiting up: scroll to top of page so Hero is in view (avoid negative / glitch)
+        scrollToY = 0
+      }
+    }
 
     body.style.position = ""
     body.style.top = ""
@@ -251,15 +265,26 @@ export default function Plans() {
     body.style.width = ""
     body.style.paddingRight = savedPaddingRightRef.current
 
-    window.scrollTo(0, y)
+    if (exitDirection === -1) {
+      // Exit up: restore scroll to Plans position first (avoids flash), then smooth scroll to Hero
+      const planSectionTop = savedScrollYRef.current
+      window.scrollTo(0, planSectionTop)
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          window.scrollTo({ top: 0, behavior: "smooth" })
+        })
+      })
+    } else {
+      window.scrollTo(0, scrollToY)
+    }
 
     setLocked(false)
     restoreScrollBehavior()
   }
 
-  const unlockForExit = () => {
+  const unlockForExit = (exitDirection: 1 | -1) => {
     armedRef.current = false
-    unlockPage()
+    unlockPage(exitDirection)
   }
 
   useEffect(() => {
@@ -316,11 +341,14 @@ export default function Plans() {
           return
         }
 
-        if (fullyVisible && armedRef.current && !lockedRef.current) {
-          cancelSettle()
+        // Only start the settle timer once when we become fully visible; don't reset on every scroll
+        // so we reliably lock after 140ms instead of cancelling repeatedly during momentum
+        if (fullyVisible && armedRef.current && !lockedRef.current && !settleTimerRef.current) {
           settleTimerRef.current = window.setTimeout(() => {
+            settleTimerRef.current = null
             if (!armedRef.current) return
             if (lockedRef.current) return
+            if (!sectionRef.current) return
             if (!isFullyVisibleNow()) return
 
             const startIdx = lastDirRef.current === 1 ? 0 : n - 1
@@ -345,18 +373,27 @@ export default function Plans() {
     }
   }, [n])
 
-  // Wheel (desktop)
+  // Wheel (desktop): use fresh visibility check so we lock as soon as section is in view
   useEffect(() => {
     const onWheel = (e: WheelEvent) => {
       if (Math.abs(e.deltaY) < 10) return
       const dir: 1 | -1 = e.deltaY > 0 ? 1 : -1
 
-      if (!lockedRef.current && fullyVisibleRef.current && armedRef.current) {
+      const fullyVisibleNow =
+        sectionRef.current &&
+        (() => {
+          const r = sectionRef.current!.getBoundingClientRect()
+          const vh = getViewportH()
+          return r.top <= tol && r.bottom >= vh - tol
+        })()
+
+      if (!lockedRef.current && fullyVisibleNow && armedRef.current) {
         const startIdx = dir === 1 ? 0 : n - 1
         if ((startIdx === 0 && dir === -1) || (startIdx === n - 1 && dir === 1)) return
 
         setStartIdxNoAnim(startIdx)
         lockPage()
+        fullyVisibleRef.current = true
 
         if (e.cancelable) e.preventDefault()
         step(dir)
@@ -370,7 +407,7 @@ export default function Plans() {
       const atLast = cur === n - 1
 
       if ((atLast && dir === 1) || (atFirst && dir === -1)) {
-        unlockForExit()
+        unlockForExit(dir)
         return
       }
 
@@ -423,7 +460,7 @@ export default function Plans() {
       const atLast = cur === n - 1
 
       if ((atLast && dir === 1) || (atFirst && dir === -1)) {
-        unlockForExit()
+        unlockForExit(dir)
         active = false
         return
       }
@@ -469,7 +506,7 @@ export default function Plans() {
 
       if (e.key === "ArrowDown" || e.key === "PageDown" || e.key === " ") {
         if (atLast) {
-          unlockForExit()
+          unlockForExit(1)
           return
         }
         e.preventDefault()
@@ -478,7 +515,7 @@ export default function Plans() {
 
       if (e.key === "ArrowUp" || e.key === "PageUp") {
         if (atFirst) {
-          unlockForExit()
+          unlockForExit(-1)
           return
         }
         e.preventDefault()
@@ -499,7 +536,7 @@ export default function Plans() {
     <section
       id="plans"
       ref={sectionRef as any}
-      className="relative isolate min-h-[100svh] h-[100dvh] w-full overflow-hidden"
+      className="relative isolate min-h-[100dvh] w-full overflow-hidden pt-10 sm:pt-12 lg:pt-14 md:h-[100vh] md:max-h-[100vh]"
       style={{ background: "#F5F5F2" }}
     >
       <style>{`
@@ -544,11 +581,11 @@ export default function Plans() {
       </div>
 
       {/* CONTENT */}
-      <div className="relative z-10 mx-auto flex h-full max-w-6xl flex-col justify-center px-4 py-8 sm:px-6 sm:py-12">
+      <div className="relative z-10 mx-auto flex h-full max-w-6xl flex-col justify-center px-4 py-4 sm:px-6 sm:py-6 md:py-2 md:pb-4">
         <div className="mx-auto text-center text-black" style={{ opacity: sectionFade }}>
           <h1 className="leading-[0.82] tracking-tight text-current">
             <span
-              className="block text-3xl sm:text-4xl md:text-5xl"
+              className="block text-2xl sm:text-3xl md:text-4xl"
               style={{ fontWeight: 800, letterSpacing: "0.15em" }}
             >
               COACHING EXPERIENCE
@@ -556,14 +593,14 @@ export default function Plans() {
           </h1>
         </div>
 
-        <div className="mx-auto mt-6 w-full">
+        <div className="mx-auto mt-4 w-full flex-1 min-h-0 flex flex-col">
           {/* BLACK WINDOW */}
-          <div className={cn("relative mx-auto w-full overflow-hidden rounded-[32px] border border-black/10 bg-black shadow-sm")}>
+          <div className={cn("relative mx-auto w-full overflow-hidden rounded-2xl md:rounded-[28px] border border-black/10 bg-black shadow-sm flex-1 min-h-0 flex flex-col")}>
             <div
-              className="w-full"
+              className="w-full flex-1 min-h-0"
               style={{
-                height: "min(70vh, 560px)",
-                minHeight: "420px",
+                height: "min(52vh, 440px)",
+                minHeight: "320px",
               }}
             >
               {/* STACK */}
@@ -587,12 +624,12 @@ export default function Plans() {
           </div>
 
           {/* CTA */}
-          <div className="mt-6 flex justify-center">
+          <div className="mt-3 md:mt-4 flex justify-center shrink-0">
             <a
               href="#plan"
               className={[
                 "inline-flex items-center justify-center",
-                "px-8 sm:px-10 py-3 text-base sm:text-lg font-semibold",
+                "px-6 sm:px-8 py-2.5 text-sm sm:text-base font-semibold",
                 "transition-all hover:scale-[1.02]",
                 "bg-white/10 text-[#0B0B0C] border border-black/15 backdrop-blur-md",
                 "hover:bg-[#C1121F]/15 hover:border-[#C1121F]/40 hover:shadow-[0_18px_60px_rgba(193,18,31,0.45)]",
