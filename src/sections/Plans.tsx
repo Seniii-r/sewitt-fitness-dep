@@ -25,11 +25,6 @@ const VIDEO_ITEMS = [
   },
   {
     title:
-      "Every session is an opportunity to get stronger, move better, and build habits that last. Your coach is with you every step of the way.",
-    videoSrc: "/vids/20251208_224538000_iOS.MP4",
-  },
-  {
-    title:
       "From strength and conditioning to recovery and nutrition, we cover the full picture so you can perform at your best.",
     videoSrc: "/vids/20260118_235927000_iOS.MP4",
   },
