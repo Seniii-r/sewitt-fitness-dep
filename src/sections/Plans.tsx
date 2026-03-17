@@ -7,36 +7,43 @@ const VIDEO_ITEMS = [
     title:
       "Clients at Sewitt Fitness don't just show up for a workout. They work closely with the same coach multiple times per week.",
     videoSrc: "/vids/20250513_225611284_iOS.MOV",
+    poster: "/img/thumbnails/20250513_225611284_iOS.jpg",
   },
   {
     title:
       "A structured plan built around you, coaching that adjusts as patterns show up, accountability that doesn't rely on motivation, and a clear process with professional standards.",
     videoSrc: "/vids/20250526_182001692_iOS.MOV",
+    poster: "/img/thumbnails/20250526_182001692_iOS.jpg",
   },
   {
     title:
       "You don't need more motivation. You need a system and someone who keeps you accountable to it.",
     videoSrc: "/vids/20250528_220722000_iOS.MOV",
+    poster: "/img/thumbnails/20250528_220722000_iOS.jpg",
   },
   {
     title:
       "Real progress comes from consistency and the right guidance. Our coaches meet you where you are and design training that fits your life.",
     videoSrc: "/vids/20250827_171038997_iOS.MP4",
+    poster: "/img/thumbnails/20250827_171038997_iOS.jpg",
   },
   {
     title:
       "From strength and conditioning to recovery and nutrition, we cover the full picture so you can perform at your best.",
     videoSrc: "/vids/20260118_235927000_iOS.MP4",
+    poster: "/img/thumbnails/20260118_235927000_iOS.jpg",
   },
   {
     title:
       "Small steps, repeated with intention and support, create lasting change. That's the Sewitt approach.",
     videoSrc: "/vids/20260119_000131000_iOS.MP4",
+    poster: "/img/thumbnails/20260119_000131000_iOS.jpg",
   },
   {
     title:
       "Join a community that trains with purpose. Your goals become our goals, and we don't leave progress to chance.",
     videoSrc: "/vids/20260119_000209000_iOS.MP4",
+    poster: "/img/thumbnails/20260119_000209000_iOS.jpg",
   },
 ] as const;
 
@@ -45,6 +52,7 @@ const testimonials = VIDEO_ITEMS.map((p) => ({
   name: "Coaching Experience",
   designation: "Sewitt Fitness",
   videoSrc: p.videoSrc,
+  ...("poster" in p && p.poster && { poster: p.poster }),
 }));
 
 const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
