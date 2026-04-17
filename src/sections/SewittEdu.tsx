@@ -1,8 +1,9 @@
 // src/pages/SewittEdu.tsx
 import { useState } from "react"
-import { Link } from "react-router-dom"
+import Link from "next/link"
 import Footer from "./Footer"
 import CTA from "./CTA"
+import posthog from "posthog-js"
 
 const BRAND = {
   cream: "#F5F5F2",
@@ -113,7 +114,7 @@ export default function SewittEdu() {
           {/* Nav back */}
           <div className="mb-8 flex items-center justify-between">
             <Link
-              to="/"
+              href="/"
               className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium shadow-sm transition hover:bg-white/90"
               style={{ color: BRAND.ink }}
             >
@@ -207,7 +208,10 @@ export default function SewittEdu() {
               img={s.img}
               body={s.body}
               open={openIndex === i}
-              onToggle={() => setOpenIndex(openIndex === i ? null : i)}
+              onToggle={() => {
+                if (openIndex !== i) posthog.capture('edu_topic_expanded', { topic: s.title })
+                setOpenIndex(openIndex === i ? null : i)
+              }}
             />
           ))}
         </div>

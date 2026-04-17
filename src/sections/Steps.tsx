@@ -1,5 +1,6 @@
 // src/pages/Steps.tsx
 import { Timeline, type TimelineEntry } from "../components/timeline"
+import posthog from "posthog-js"
 
 export default function Steps() {
   const Bullet = ({ children }: { children: React.ReactNode }) => (
@@ -81,6 +82,7 @@ export default function Steps() {
               href="https://calendly.com/sewitt-fitness-calendly/30min?"
               target="_blank"
               rel="noopener noreferer"
+              onClick={() => posthog.capture('book_session_clicked', { source: 'steps_section' })}
               className={[
                 "inline-flex items-center justify-center",
                 "px-6 sm:px-10 py-3 text-base sm:text-lg font-semibold",

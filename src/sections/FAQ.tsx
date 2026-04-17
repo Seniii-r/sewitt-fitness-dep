@@ -1,5 +1,6 @@
 // src/sections/FAQ.tsx
 import { useEffect, useRef, useState } from "react"
+import posthog from "posthog-js"
 
 const PAGE_BLACK = "#0B0B0C"
 const clamp01 = (n: number) => Math.min(1, Math.max(0, n))
@@ -151,7 +152,11 @@ export default function FAQ() {
               q={f.q}
               a={f.a}
               open={openIndex === idx}
-              onToggle={() => setOpenIndex(openIndex === idx ? null : idx)}
+              onToggle={() => {
+                const isOpening = openIndex !== idx
+                if (isOpening) posthog.capture('faq_item_toggled', { question: f.q, action: 'open' })
+                setOpenIndex(openIndex === idx ? null : idx)
+              }}
             />
           ))}
         </div>

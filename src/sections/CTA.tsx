@@ -1,6 +1,7 @@
 // src/sections/CTA.tsx
 import { useRef, useState, useEffect } from "react"
 import LiquidEther from "../components/LiquidEther"
+import posthog from "posthog-js"
 
 const PAGE_BLACK = "#0B0B0C"
 
@@ -76,6 +77,7 @@ export default function CTA() {
               rel="noopener noreferer"
               onMouseEnter={() => setHovered(true)}
               onMouseLeave={() => setHovered(false)}
+              onClick={() => posthog.capture('book_session_clicked', { source: 'cta_section' })}
               className={[
                 "inline-flex items-center justify-center",
                 "px-8 sm:px-10 py-3 text-base sm:text-lg font-semibold",

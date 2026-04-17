@@ -7,10 +7,35 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
+
+# Next.js
+.next
+out
+
+# Legacy / other bundlers
 dist
 dist-ssr
+
+# TypeScript incremental
+*.tsbuildinfo
+
+# Env (secrets & machine-specific)
+.env
+.env*.local
 *.local
+
+# Vercel CLI link data
+.vercel
+
+# Caches & stores
+.turbo
+.eslintcache
+.pnpm-store
+
+# Tests
+coverage
 
 # Editor directories and files
 .vscode/*

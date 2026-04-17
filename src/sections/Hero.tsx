@@ -1,6 +1,7 @@
 // src/sections/Hero.tsx
 import { useEffect, useMemo, useState } from "react"
 import { cn } from "../lib/cn"
+import posthog from "posthog-js"
 
 type Testimonial = {
   quote: string
@@ -162,7 +163,7 @@ export default function Hero() {
             {/* ✅ Desktop nav (unchanged) */}
             <nav className="hidden items-center gap-6 text-sm md:flex" style={{ color: `${BRAND.smoke}B3` }}>
               {nav.map((x) => (
-                <a key={x.label} href={x.href} className="hover:text-[#F5F5F2]">
+                <a key={x.label} href={x.href} className="hover:text-[#F5F5F2]" onClick={() => posthog.capture('nav_link_clicked', { label: x.label, href: x.href, source: 'desktop' })}>
                   {x.label}
                 </a>
               ))}
@@ -198,7 +199,7 @@ export default function Hero() {
                       <a
                         key={x.label}
                         href={x.href}
-                        onClick={() => setMenuOpen(false)}
+                        onClick={() => { setMenuOpen(false); posthog.capture('nav_link_clicked', { label: x.label, href: x.href, source: 'mobile' }) }}
                         className="px-4 py-3 text-sm transition-colors hover:bg-white/10"
                         style={{ color: "rgba(245,245,242,0.85)" }}
                       >
@@ -213,6 +214,7 @@ export default function Hero() {
             {/* Top-right CTA */}
             <a
               href="#plan"
+              onClick={() => posthog.capture('hero_cta_clicked', { label: 'See How Coaching Works' })}
               className="inline-flex items-center gap-3 px-3 py-2 text-xs font-semibold shadow-lg transition-transform hover:scale-[1.01] sm:px-4 sm:text-sm"
               style={{
                 backgroundColor: BRAND.red,
@@ -266,6 +268,7 @@ export default function Hero() {
                       href="https://calendly.com/sewitt-fitness-calendly/30min?"
                       target="_blank"
                       rel="noopener noreferer"
+                      onClick={() => posthog.capture('book_session_clicked', { source: 'hero_mobile' })}
                       className={[
                         "absolute left-1/2 -translate-x-1/2 z-10",
                         "bottom-5",
@@ -360,6 +363,7 @@ export default function Hero() {
                     href="https://calendly.com/sewitt-fitness-calendly/30min?"
                     target="_blank"
                     rel="noopener noreferer"
+                    onClick={() => posthog.capture('book_session_clicked', { source: 'hero_desktop' })}
                     className={[
                       "absolute left-1/2 -translate-x-1/2",
                       "bottom-5 sm:bottom-6 lg:bottom-6",

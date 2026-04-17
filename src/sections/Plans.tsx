@@ -1,6 +1,7 @@
 // src/sections/Plans.tsx
 import { useEffect, useRef, useState } from "react";
 import { CircularTestimonials } from "../components/ui/circular-testimonials";
+import posthog from "posthog-js";
 
 const VIDEO_ITEMS = [
   {
@@ -176,6 +177,7 @@ export default function Plans() {
               actionsAboveArrows={
                 <a
                   href="#plan"
+                  onClick={() => posthog.capture('see_coaching_works_clicked', { source: 'plans_carousel' })}
                   className={[
                     "inline-flex items-center justify-center whitespace-nowrap",
                     "px-4 py-2 text-sm font-semibold",
