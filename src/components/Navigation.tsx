@@ -44,8 +44,8 @@ export default function Navigation() {
           : "bg-transparent border-b border-transparent",
       ].join(" ")}
     >
-      <div className="container-x flex h-20 md:h-24 items-center justify-between">
-        <div className="flex items-center gap-10 lg:gap-16">
+      <div className="w-full max-w-[1600px] mx-auto px-6 md:px-10 flex h-20 md:h-24 items-center justify-between gap-4">
+        <div className="flex items-center gap-6 2xl:gap-10 min-w-0">
           <Link
             href="/#home"
             className="h-display text-[20px] md:text-[22px] text-smoke tracking-[0.04em] shrink-0"
@@ -54,7 +54,7 @@ export default function Navigation() {
             {SITE_NAME}
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-6 xl:gap-8">
+          <nav className="hidden xl:flex items-center gap-4 2xl:gap-6">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
@@ -67,12 +67,12 @@ export default function Navigation() {
           </nav>
         </div>
 
-        <div className="hidden lg:block shrink-0 ml-8 xl:ml-12">
+        <div className="hidden xl:block shrink-0">
           <a
             href={CALENDLY_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="btn btn-primary text-[12px]"
+            className="btn btn-primary text-[12px] whitespace-nowrap"
           >
             Book Free Intro Session
           </a>
@@ -83,7 +83,7 @@ export default function Navigation() {
           aria-label={open ? "Close menu" : "Open menu"}
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
-          className="lg:hidden p-2 -mr-2 text-smoke"
+          className="xl:hidden p-2 -mr-2 text-smoke"
         >
           <span className="sr-only">{open ? "Close menu" : "Open menu"}</span>
           <div className="w-6 h-4 relative">
@@ -112,7 +112,7 @@ export default function Navigation() {
       {/* Mobile overlay */}
       <div
         className={[
-          "lg:hidden fixed inset-0 top-20 md:top-24 bg-onyx transition-opacity duration-300",
+          "xl:hidden fixed inset-0 top-20 md:top-24 bg-onyx transition-opacity duration-300",
           open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
         ].join(" ")}
       >
