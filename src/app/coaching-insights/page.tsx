@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CALENDLY_URL } from "@/lib/site";
-import { CATEGORY_COLOR, POSTS, formatDate } from "@/lib/posts";
+import {
+  CATEGORY_COLOR,
+  formatDate,
+  getAllPosts,
+  getFeaturedPost,
+} from "@/lib/posts";
 import PostGrid from "@/components/blog/PostGrid";
 
 export const metadata: Metadata = {
@@ -10,68 +15,78 @@ export const metadata: Metadata = {
     "Training thoughts, honest advice, and coaching notes from Christopher Sewitt.",
 };
 
-export default function CoachingInsightsPage() {
-  const featured = POSTS.find((p) => p.featured) ?? POSTS[0];
-  const rest = POSTS.filter((p) => p.slug !== featured.slug);
+export default async function CoachingInsightsPage() {
+  const [allPosts, featured] = await Promise.all([
+    getAllPosts(),
+    getFeaturedPost(),
+  ]);
+
+  const rest = featured
+    ? allPosts.filter((p) => p.slug !== featured.slug)
+    : allPosts;
 
   return (
     <>
       {/* Hero bar */}
-      <section className="bg-[--color-onyx] pt-32 md:pt-36 pb-16 md:pb-20">
+      <section className="bg-onyx pt-32 md:pt-36 pb-16 md:pb-20">
         <div className="container-x text-center">
-          <span className="label-mono text-[--color-gold]">COACHING INSIGHTS</span>
-          <h1 className="mt-6 text-[28px] md:text-[36px] font-bold text-[--color-smoke] max-w-[720px] mx-auto leading-tight">
+          <span className="label-mono text-gold">COACHING INSIGHTS</span>
+          <h1 className="mt-6 text-[28px] md:text-[36px] font-bold text-smoke max-w-[720px] mx-auto leading-tight">
             Training thoughts, honest advice, and coaching notes from Chris.
           </h1>
         </div>
       </section>
 
       {/* Featured post */}
-      <section className="bg-[--color-onyx-2]">
-        <div className="container-x py-12 md:py-16">
-          <Link
-            href={`/coaching-insights/${featured.slug}`}
-            className="block group rounded-md overflow-hidden bg-[--color-onyx-3]"
-          >
-            <div className="grid md:grid-cols-2 gap-0">
-              <div className="relative aspect-[16/10] md:aspect-auto bg-[--color-onyx]">
-                <img
-                  src={featured.image}
-                  alt=""
-                  className="w-full h-full object-cover transition-opacity duration-200 group-hover:opacity-90"
-                  loading="eager"
-                />
-              </div>
-              <div className="p-8 md:p-12 flex flex-col justify-center">
-                <div
-                  className="label-mono-sm mb-4"
-                  style={{ color: CATEGORY_COLOR[featured.category] }}
-                >
-                  {featured.category.toUpperCase()}
+      {featured && (
+        <section className="bg-onyx-2">
+          <div className="container-x py-12 md:py-16">
+            <Link
+              href={`/coaching-insights/${featured.slug}`}
+              className="block group rounded-md overflow-hidden bg-onyx-3"
+            >
+              <div className="grid md:grid-cols-2 gap-0">
+                <div className="relative aspect-[16/10] md:aspect-auto bg-onyx">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={featured.image}
+                    alt={featured.imageAlt ?? ""}
+                    className="w-full h-full object-cover transition-opacity duration-200 group-hover:opacity-90"
+                    loading="eager"
+                  />
                 </div>
-                <h2 className="text-[28px] md:text-[32px] font-bold text-[--color-smoke] leading-tight mb-5">
-                  {featured.title}
-                </h2>
-                <p className="text-[16px] text-[--color-smoke]/75 mb-6">
-                  {featured.excerpt}
-                </p>
-                <div className="text-[13px] text-[--color-smoke]/50 mb-7">
-                  By Chris Sewitt · {formatDate(featured.date)} · {featured.readTime}
+                <div className="p-8 md:p-12 flex flex-col justify-center">
+                  <div
+                    className="label-mono-sm mb-4"
+                    style={{ color: CATEGORY_COLOR[featured.category] }}
+                  >
+                    {featured.category.toUpperCase()}
+                  </div>
+                  <h2 className="text-[28px] md:text-[32px] font-bold text-smoke leading-tight mb-5">
+                    {featured.title}
+                  </h2>
+                  <p className="text-[16px] text-smoke/75 mb-6">
+                    {featured.excerpt}
+                  </p>
+                  <div className="text-[13px] text-smoke/50 mb-7">
+                    By Chris Sewitt · {formatDate(featured.date)} ·{" "}
+                    {featured.readTime}
+                  </div>
+                  <span className="btn btn-primary self-start">Read Post</span>
                 </div>
-                <span className="btn btn-primary self-start">Read Post</span>
               </div>
-            </div>
-          </Link>
-        </div>
-      </section>
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* Filter + grid */}
       <PostGrid posts={rest} />
 
       {/* Pre-footer in-page CTA so blog shoppers see one without scrolling to footer */}
-      <section className="bg-[--color-brick]">
+      <section className="bg-brick">
         <div className="container-x py-16 text-center">
-          <h3 className="h-display text-[28px] md:text-[32px] text-[--color-smoke] mb-4">
+          <h3 className="h-display text-[28px] md:text-[32px] text-smoke mb-4">
             Got a question? Bring it to the intro.
           </h3>
           <a

@@ -1,5 +1,5 @@
 const Stars = ({ count = 5 }: { count?: number }) => (
-  <span className="text-[--color-gold] tracking-[0.15em]" aria-label={`${count} star rating`}>
+  <span className="text-gold tracking-[0.15em]" aria-label={`${count} star rating`}>
     {"★".repeat(count)}
   </span>
 );
@@ -32,12 +32,12 @@ export default function Testimonials() {
   return (
     <section
       id="testimonials"
-      className="bg-[--color-cream] text-[--color-onyx] section"
+      className="bg-cream text-onyx section"
     >
       <div className="container-x">
         <div className="text-center mb-12 md:mb-16">
-          <span className="label-mono text-[--color-brick] reveal">REAL RESULTS</span>
-          <p className="mt-6 text-[18px] text-[--color-onyx] max-w-[640px] mx-auto reveal" data-delay="80">
+          <span className="label-mono text-brick reveal">REAL RESULTS</span>
+          <p className="mt-6 text-[18px] text-onyx max-w-[640px] mx-auto reveal" data-delay="80">
             Proof beats promises. Here&rsquo;s what clients say after putting in the work.
           </p>
         </div>
@@ -45,10 +45,10 @@ export default function Testimonials() {
         {/* Featured */}
         <div className="bg-white rounded-lg shadow-[0_4px_24px_rgba(0,0,0,0.08)] p-8 md:p-12 max-w-[960px] mx-auto reveal">
           <Stars />
-          <blockquote className="mt-5 text-[20px] md:text-[22px] italic text-[--color-onyx] leading-snug">
+          <blockquote className="mt-5 text-[20px] md:text-[22px] italic text-onyx leading-snug">
             &ldquo;{featured.quote}&rdquo;
           </blockquote>
-          <div className="mt-6 font-bold text-[16px] text-[--color-onyx]">
+          <div className="mt-6 font-bold text-[16px] text-onyx">
             — {featured.name}
           </div>
         </div>
@@ -65,7 +65,7 @@ export default function Testimonials() {
               <blockquote className="mt-4 text-[15px] md:text-[16px] text-[#333333] leading-relaxed">
                 &ldquo;{t.quote}&rdquo;
               </blockquote>
-              <div className="mt-5 font-bold text-[15px] text-[--color-onyx]">
+              <div className="mt-5 font-bold text-[15px] text-onyx">
                 — {t.name}
               </div>
             </div>

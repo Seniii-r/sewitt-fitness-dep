@@ -26,8 +26,8 @@ export default function PostGrid({ posts }: { posts: Post[] }) {
                 className={[
                   "label-mono-sm px-4 py-2 rounded-sm transition-all border",
                   isActive
-                    ? "bg-[--color-brick] text-[--color-smoke] border-[--color-brick]"
-                    : "bg-transparent text-[--color-smoke]/60 border-white/20 hover:text-[--color-smoke] hover:border-white/40",
+                    ? "bg-brick text-smoke border-brick"
+                    : "bg-transparent text-smoke/60 border-white/20 hover:text-smoke hover:border-white/40",
                 ].join(" ")}
                 aria-pressed={isActive}
               >
@@ -40,7 +40,7 @@ export default function PostGrid({ posts }: { posts: Post[] }) {
 
       <div className="container-x pb-20 md:pb-28">
         {filtered.length === 0 ? (
-          <p className="text-[--color-smoke]/60 text-center py-20">
+          <p className="text-smoke/60 text-center py-20">
             No posts in this category yet.
           </p>
         ) : (

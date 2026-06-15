@@ -4,7 +4,6 @@ import WhoThisIsFor from "@/components/sections/WhoThisIsFor";
 import CoachingExperience from "@/components/sections/CoachingExperience";
 import HowItWorks from "@/components/sections/HowItWorks";
 import Objections from "@/components/sections/Objections";
-import MidPageCTA from "@/components/sections/MidPageCTA";
 import Testimonials from "@/components/sections/Testimonials";
 import About from "@/components/sections/About";
 import FAQ from "@/components/sections/FAQ";
@@ -19,7 +18,6 @@ export default function Home() {
       <CoachingExperience />
       <HowItWorks />
       <Objections />
-      <MidPageCTA />
       <Testimonials />
       <About />
       <FAQ />

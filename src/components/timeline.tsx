@@ -24,6 +24,7 @@ export function Timeline({
   const containerRef = useRef<HTMLDivElement>(null)
 
   const itemRefs = useRef<(HTMLDivElement | null)[]>([])
+  const dotRefs = useRef<(HTMLDivElement | null)[]>([])
   const rafRef = useRef<number | null>(null)
 
   const [height, setHeight] = useState(0)
@@ -48,24 +49,38 @@ export function Timeline({
     }
   }, [])
 
-  // Track which step is "hit" (closest to an anchor point in viewport)
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start 10%", "end 50%"],
+  })
+
+  const heightTransform = useTransform(scrollYProgress, [0, 1], [0, height])
+  const opacityTransform = useTransform(scrollYProgress, [0, 0.1], [0, 1])
+
+  // Highlight the step whose circle the descending beam tip is currently
+  // nearest. As the beam grows past a circle the next one takes over, so the
+  // active step "lights up" when hit and dims again once the beam passes.
   useEffect(() => {
-    const onScroll = () => {
+    const update = () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
 
       rafRef.current = requestAnimationFrame(() => {
-        const anchorY = Math.round((window.innerHeight || 1) * 0.42) // tweak if you want earlier/later activation
+        const rail = railMeasureRef.current
+        if (!rail) return
+
+        const railRect = rail.getBoundingClientRect()
+        const progress = Math.min(Math.max(scrollYProgress.get(), 0), 1)
+        const beamTipY = railRect.top + progress * railRect.height
 
         let bestIdx = 0
         let bestDist = Number.POSITIVE_INFINITY
 
-        for (let i = 0; i < itemRefs.current.length; i++) {
-          const node = itemRefs.current[i]
+        for (let i = 0; i < dotRefs.current.length; i++) {
+          const node = dotRefs.current[i]
           if (!node) continue
           const r = node.getBoundingClientRect()
-
-          // distance from anchor to the item's top-ish area
-          const dist = Math.abs(r.top - anchorY)
+          const dotCenterY = r.top + r.height / 2
+          const dist = Math.abs(dotCenterY - beamTipY)
           if (dist < bestDist) {
             bestDist = dist
             bestIdx = i
@@ -76,24 +91,18 @@ export function Timeline({
       })
     }
 
-    onScroll()
-    window.addEventListener("scroll", onScroll, { passive: true })
-    window.addEventListener("resize", onScroll)
+    update()
+    const unsubscribe = scrollYProgress.on("change", update)
+    window.addEventListener("scroll", update, { passive: true })
+    window.addEventListener("resize", update)
 
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
-      window.removeEventListener("scroll", onScroll)
-      window.removeEventListener("resize", onScroll)
+      unsubscribe()
+      window.removeEventListener("scroll", update)
+      window.removeEventListener("resize", update)
     }
-  }, [data.length])
-
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start 10%", "end 50%"],
-  })
-
-  const heightTransform = useTransform(scrollYProgress, [0, 1], [0, height])
-  const opacityTransform = useTransform(scrollYProgress, [0, 0.1], [0, 1])
+  }, [data.length, scrollYProgress])
 
   return (
     <div
@@ -130,6 +139,9 @@ export function Timeline({
               <div className="sticky top-40 z-40 relative flex flex-col items-center self-start max-w-xs md:w-full md:flex-row lg:max-w-sm">
                 {/* Dot */}
                 <div
+                  ref={(el) => {
+                    dotRefs.current[index] = el
+                  }}
                   className={[
                     "absolute left-3 flex h-10 w-10 items-center justify-center rounded-full ring-1 transition-colors duration-300",
                     isActive ? "bg-[#0B0B0C] ring-white/30" : "bg-[#0B0B0C] ring-white/10",

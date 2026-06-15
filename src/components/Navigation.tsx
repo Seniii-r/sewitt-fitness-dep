@@ -6,10 +6,22 @@ import { CALENDLY_URL, NAV_LINKS, SITE_NAME } from "@/lib/site";
 
 export default function Navigation() {
   const [scrolled, setScrolled] = useState(false);
+  const [hidden, setHidden] = useState(false);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 100);
+    let lastY = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      setScrolled(y > 100);
+      // Hide when scrolling down (past the header height), show when scrolling up
+      if (y > lastY && y > 120) {
+        setHidden(true);
+      } else if (y < lastY) {
+        setHidden(false);
+      }
+      lastY = y;
+    };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -25,34 +37,37 @@ export default function Navigation() {
   return (
     <header
       className={[
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
+        "fixed top-0 left-0 right-0 z-50 transition-transform transition-colors duration-300 ease-in-out",
+        hidden && !open ? "-translate-y-full" : "translate-y-0",
         scrolled || open
-          ? "bg-[--color-onyx] border-b border-[--color-brick]"
+          ? "bg-onyx border-b border-brick"
           : "bg-transparent border-b border-transparent",
       ].join(" ")}
     >
       <div className="container-x flex h-20 md:h-24 items-center justify-between">
-        <Link
-          href="/#home"
-          className="h-display text-[20px] md:text-[22px] text-[--color-smoke] tracking-[0.04em] shrink-0"
-          onClick={() => setOpen(false)}
-        >
-          {SITE_NAME}
-        </Link>
+        <div className="flex items-center gap-10 lg:gap-16">
+          <Link
+            href="/#home"
+            className="h-display text-[20px] md:text-[22px] text-smoke tracking-[0.04em] shrink-0"
+            onClick={() => setOpen(false)}
+          >
+            {SITE_NAME}
+          </Link>
 
-        <nav className="hidden lg:flex items-center gap-6 xl:gap-8">
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="text-[11px] uppercase tracking-[0.08em] text-[--color-smoke] hover:text-[--color-brick] transition-colors whitespace-nowrap"
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
+          <nav className="hidden lg:flex items-center gap-6 xl:gap-8">
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-[11px] uppercase tracking-[0.08em] text-smoke hover:text-brick transition-colors whitespace-nowrap"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
 
-        <div className="hidden lg:block ml-6 shrink-0">
+        <div className="hidden lg:block shrink-0 ml-8 xl:ml-12">
           <a
             href={CALENDLY_URL}
             target="_blank"
@@ -68,25 +83,25 @@ export default function Navigation() {
           aria-label={open ? "Close menu" : "Open menu"}
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
-          className="lg:hidden p-2 -mr-2 text-[--color-smoke]"
+          className="lg:hidden p-2 -mr-2 text-smoke"
         >
           <span className="sr-only">{open ? "Close menu" : "Open menu"}</span>
           <div className="w-6 h-4 relative">
             <span
               className={[
-                "absolute left-0 right-0 h-[2px] bg-[--color-smoke] transition-all duration-300",
+                "absolute left-0 right-0 h-[2px] bg-smoke transition-all duration-300",
                 open ? "top-1/2 rotate-45 -translate-y-1/2" : "top-0",
               ].join(" ")}
             />
             <span
               className={[
-                "absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[2px] bg-[--color-smoke] transition-all duration-200",
+                "absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[2px] bg-smoke transition-all duration-200",
                 open ? "opacity-0" : "opacity-100",
               ].join(" ")}
             />
             <span
               className={[
-                "absolute left-0 right-0 h-[2px] bg-[--color-smoke] transition-all duration-300",
+                "absolute left-0 right-0 h-[2px] bg-smoke transition-all duration-300",
                 open ? "top-1/2 -rotate-45 -translate-y-1/2" : "bottom-0",
               ].join(" ")}
             />
@@ -97,7 +112,7 @@ export default function Navigation() {
       {/* Mobile overlay */}
       <div
         className={[
-          "lg:hidden fixed inset-0 top-20 md:top-24 bg-[--color-onyx] transition-opacity duration-300",
+          "lg:hidden fixed inset-0 top-20 md:top-24 bg-onyx transition-opacity duration-300",
           open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
         ].join(" ")}
       >
@@ -107,7 +122,7 @@ export default function Navigation() {
               key={link.href}
               href={link.href}
               onClick={() => setOpen(false)}
-              className="text-[28px] uppercase tracking-[0.08em] text-[--color-smoke] hover:text-[--color-brick] transition-colors"
+              className="text-[28px] uppercase tracking-[0.08em] text-smoke hover:text-brick transition-colors"
             >
               {link.label}
             </Link>
