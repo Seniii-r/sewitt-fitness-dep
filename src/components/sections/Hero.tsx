@@ -14,10 +14,10 @@ export default function Hero() {
     >
       <div
         aria-hidden
-        className="absolute inset-0 bg-cover bg-center bg-[right_20%_center]"
+        className="absolute inset-0 bg-no-repeat bg-center md:bg-right [background-size:cover] md:[background-size:auto_100%]"
         style={{
           backgroundImage:
-            "linear-gradient(90deg, rgba(11,11,12,0.92) 40%, rgba(11,11,12,0.5) 100%), url('/images/hero1.jpeg')",
+            "linear-gradient(90deg, rgba(11,11,12,0.95) 35%, rgba(11,11,12,0.6) 70%, rgba(11,11,12,0.35) 100%), url('/images/hero1.jpeg')",
         }}
       />
 
