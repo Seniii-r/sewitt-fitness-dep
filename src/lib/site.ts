@@ -1,7 +1,6 @@
 // Shared site config. Update these values before launch.
 
-// TODO: Replace with the real Calendly URL provided by the client.
-export const CALENDLY_URL = "https://calendly.com/sewitt-fitness/intro";
+export const CALENDLY_URL = "https://calendly.com/sewitt-fitness-calendly/30min?";
 
 export const INSTAGRAM_URL = "https://instagram.com/sewitt.fitness";
 export const TWITTER_URL = "https://twitter.com/sewittfitness";
