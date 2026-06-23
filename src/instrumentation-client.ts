@@ -1,7 +1,9 @@
 import posthog from "posthog-js"
 
 posthog.init(process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN!, {
-  api_host: "/ingest",
+  // Managed reverse proxy on our own subdomain (CNAME e.sewittfitness.ca →
+  // PostHog), much harder for ad-blockers to block than the /ingest path.
+  api_host: "https://e.sewittfitness.ca",
   ui_host: "https://us.posthog.com",
   // Include the defaults option as required by PostHog
   defaults: "2026-01-30",
