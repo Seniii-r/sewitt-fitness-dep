@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getAllPosts, CATEGORY_COLOR } from "@/lib/posts";
+import BlogSubscribe from "@/components/BlogSubscribe";
 
 export default async function BlogPreview() {
   const posts = (await getAllPosts()).slice(0, 3);
@@ -69,6 +70,11 @@ export default async function BlogPreview() {
             All Posts
           </Link>
         </div>
+
+        <BlogSubscribe
+          source="home_coaching_insights"
+          className="mt-12 md:mt-16 reveal"
+        />
 
       </div>
     </section>

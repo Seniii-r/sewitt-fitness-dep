@@ -3,12 +3,13 @@ import "./globals.css";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import RevealOnScroll from "@/components/RevealOnScroll";
+import BlogNotificationsPopup from "@/components/BlogNotificationsPopup";
 
 export const metadata: Metadata = {
   title: "Sewitt Fitness — Personal Training in Mississauga & Toronto",
   description:
     "A complete coaching experience, not just workouts. Structured personal training with Christopher Sewitt, GTA-based.",
-  metadataBase: new URL("https://sewittfitness.ca"),
+  metadataBase: new URL("https://www.sewittfitness.ca"),
   openGraph: {
     title: "Sewitt Fitness",
     description:
@@ -30,6 +31,7 @@ export default function RootLayout({
         <main className="flex-1">{children}</main>
         <Footer />
         <RevealOnScroll />
+        <BlogNotificationsPopup />
       </body>
     </html>
   );

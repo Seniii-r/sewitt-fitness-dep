@@ -11,6 +11,7 @@ import {
 } from "@/lib/posts";
 import { CALENDLY_URL } from "@/lib/site";
 import PostCard from "@/components/blog/PostCard";
+import BlogSubscribe from "@/components/BlogSubscribe";
 
 export async function generateStaticParams() {
   const slugs = await getPostSlugs();
@@ -91,6 +92,13 @@ export default async function PostPage({ params }: Props) {
           </div>
         </div>
       </article>
+
+      {/* Join my newsletter */}
+      <section className="bg-onyx">
+        <div className="container-x max-w-[820px] pb-16 md:pb-20">
+          <BlogSubscribe source="blog_post" />
+        </div>
+      </section>
 
       {/* End-of-post CTA */}
       <section className="bg-brick">

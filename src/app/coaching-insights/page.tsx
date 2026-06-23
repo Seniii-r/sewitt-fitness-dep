@@ -8,6 +8,7 @@ import {
   getFeaturedPost,
 } from "@/lib/posts";
 import PostGrid from "@/components/blog/PostGrid";
+import BlogSubscribe from "@/components/BlogSubscribe";
 
 export const metadata: Metadata = {
   title: "Coaching Insights — Sewitt Fitness",
@@ -82,6 +83,13 @@ export default async function CoachingInsightsPage() {
 
       {/* Filter + grid */}
       <PostGrid posts={rest} />
+
+      {/* Blog notification signup */}
+      <section className="bg-onyx">
+        <div className="container-x pb-16 md:pb-20">
+          <BlogSubscribe source="coaching_insights_page" />
+        </div>
+      </section>
 
       {/* Pre-footer in-page CTA so blog shoppers see one without scrolling to footer */}
       <section className="bg-brick">

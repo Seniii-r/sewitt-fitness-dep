@@ -112,6 +112,15 @@ export const postType = defineType({
         "Show this post in the large featured slot at the top of Coaching Insights.",
       initialValue: false,
     }),
+    defineField({
+      name: "notifiedAt",
+      title: "Notified at",
+      type: "datetime",
+      description:
+        "Set automatically once subscribers have been emailed about this post. Clear it to re-send the announcement.",
+      readOnly: true,
+      hidden: true,
+    }),
   ],
   orderings: [
     {

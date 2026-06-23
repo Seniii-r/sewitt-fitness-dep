@@ -2,7 +2,7 @@
 
 export const CALENDLY_URL = "https://calendly.com/sewitt-fitness-calendly/30min?";
 
-export const INSTAGRAM_URL = "https://instagram.com/sewitt.fitness";
+export const INSTAGRAM_URL = "https://www.instagram.com/sewittfitness.ca/";
 export const TWITTER_URL = "https://twitter.com/sewittfitness";
 export const TIKTOK_URL = "https://tiktok.com/@sewittfitness";
 
