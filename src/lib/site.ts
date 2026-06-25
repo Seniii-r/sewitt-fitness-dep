@@ -1,5 +1,9 @@
 // Shared site config. Update these values before launch.
 
+// Canonical production origin (no trailing slash). Keep in sync with the
+// metadataBase in src/app/layout.tsx.
+export const SITE_URL = "https://www.sewittfitness.ca";
+
 export const CALENDLY_URL = "https://calendly.com/sewitt-fitness-calendly/30min?";
 
 export const INSTAGRAM_URL = "https://www.instagram.com/sewittfitness.ca/";

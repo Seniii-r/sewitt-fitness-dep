@@ -109,20 +109,22 @@ export default function Navigation() {
         </button>
       </div>
 
-      {/* Mobile overlay */}
+      {/* Mobile overlay — scrolls when the links don't fit, and centers when
+          they do. The inner min-h-full wrapper keeps items from overflowing up
+          into the header (which caused the labels to overlap the logo). */}
       <div
         className={[
-          "xl:hidden fixed inset-0 top-20 md:top-24 bg-onyx transition-opacity duration-300",
+          "xl:hidden fixed inset-0 top-20 md:top-24 bg-onyx overflow-y-auto overscroll-contain transition-opacity duration-300",
           open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
         ].join(" ")}
       >
-        <div className="h-full flex flex-col items-center justify-center gap-8 px-6 pb-24">
+        <div className="min-h-full flex flex-col items-center justify-center gap-6 px-6 py-10">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               onClick={() => setOpen(false)}
-              className="text-[28px] uppercase tracking-[0.08em] text-smoke hover:text-brick transition-colors"
+              className="text-2xl uppercase tracking-[0.08em] text-smoke hover:text-brick transition-colors text-center"
             >
               {link.label}
             </Link>
@@ -132,7 +134,7 @@ export default function Navigation() {
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => setOpen(false)}
-            className="btn btn-primary mt-6"
+            className="btn btn-primary mt-2"
           >
             Book Free Intro Session
           </a>

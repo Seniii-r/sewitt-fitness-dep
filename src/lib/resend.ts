@@ -11,6 +11,13 @@ export const RESEND_SEGMENT_ID = process.env.RESEND_SEGMENT_ID ?? "";
 export const RESEND_FROM =
   process.env.RESEND_FROM ?? "Sewitt Fitness <onboarding@resend.dev>";
 
+// Reply-to for notifications. Pointing replies at a real, monitored inbox is a
+// strong signal to Gmail that the mail is a personal message (Primary) rather
+// than a bulk blast (Promotions). Leave unset to omit the header entirely —
+// the sending domain has receiving disabled, so don't reply-to an @-domain
+// address that can't actually receive mail.
+export const RESEND_REPLY_TO = process.env.RESEND_REPLY_TO || undefined;
+
 /** True once the API key and segment are configured. */
 export const isResendConfigured = Boolean(apiKey && RESEND_SEGMENT_ID);
 
