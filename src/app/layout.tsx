@@ -4,6 +4,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import RevealOnScroll from "@/components/RevealOnScroll";
 import BlogNotificationsPopup from "@/components/BlogNotificationsPopup";
+import MetaPixel from "@/components/MetaPixel";
 import {
   SITE_URL,
   SITE_NAME,
@@ -76,6 +77,7 @@ export default function RootLayout({
     <html lang="en" className="h-full antialiased">
       {/* Plausible analytics placeholder — Plausible script tag goes here, managed by The Ikigai Project. */}
       <body className="min-h-full flex flex-col bg-[--color-onyx] text-[--color-smoke]">
+        <MetaPixel />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

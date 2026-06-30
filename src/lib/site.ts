@@ -10,6 +10,10 @@ export const INSTAGRAM_URL = "https://www.instagram.com/sewittfitness.ca/";
 export const TWITTER_URL = "https://twitter.com/sewittfitness";
 export const TIKTOK_URL = "https://tiktok.com/@sewittfitness";
 
+// Meta (Facebook) Pixel ID. This is a public client-side identifier — it ships
+// in the page HTML by design, so it lives here rather than in a secret env var.
+export const FACEBOOK_PIXEL_ID = "2817243751968852";
+
 export const SITE_NAME = "SEWITT.FITNESS";
 export const SITE_TAGLINE =
   "Structured personal training built around you, not around trends.";
