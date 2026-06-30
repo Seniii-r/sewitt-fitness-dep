@@ -65,8 +65,9 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-10 border-t border-white/10 pt-6 text-xs text-white/40">
-          © {new Date().getFullYear()} Sewitt Fitness. All rights reserved.
+        <div className="mt-10 flex flex-col gap-3 border-t border-white/10 pt-6 text-xs text-white/40 sm:flex-row sm:items-center sm:justify-between">
+          <span>© {new Date().getFullYear()} Sewitt Fitness. All rights reserved.</span>
+          <Link href="/privacy" className="hover:text-white">Privacy Policy</Link>
         </div>
       </div>
     </footer>

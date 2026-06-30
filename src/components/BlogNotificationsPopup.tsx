@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import posthog from "posthog-js";
 import { subscribeEmail } from "@/lib/subscribe";
 
@@ -17,6 +18,7 @@ export default function BlogNotificationsPopup() {
   const [visible, setVisible] = useState(false); // drives the enter/exit transition
   const [email, setEmail] = useState("");
   const [company, setCompany] = useState(""); // honeypot
+  const [accepted, setAccepted] = useState(false); // privacy policy consent
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -86,7 +88,7 @@ export default function BlogNotificationsPopup() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (status === "submitting") return;
+    if (status === "submitting" || !accepted) return;
     setStatus("submitting");
     setMessage("");
 
@@ -203,10 +205,30 @@ export default function BlogNotificationsPopup() {
                 disabled={status === "submitting"}
                 className="rounded-[2px] border border-white/15 bg-onyx px-4 py-3 text-[15px] text-smoke outline-none transition-colors placeholder:text-smoke/35 focus:border-brick disabled:opacity-60"
               />
+              <label className="flex cursor-pointer items-start gap-2 text-[12px] leading-relaxed text-smoke/60">
+                <input
+                  type="checkbox"
+                  checked={accepted}
+                  onChange={(e) => setAccepted(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 shrink-0 accent-brick"
+                />
+                <span>
+                  I agree to the{" "}
+                  <Link
+                    href="/privacy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gold underline-offset-2 hover:underline"
+                  >
+                    Privacy Policy
+                  </Link>
+                  .
+                </span>
+              </label>
               <button
                 type="submit"
-                disabled={status === "submitting"}
-                className="btn btn-primary w-full disabled:opacity-60"
+                disabled={status === "submitting" || !accepted}
+                className="btn btn-primary w-full disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {status === "submitting" ? "Signing up…" : "Notify Me"}
               </button>

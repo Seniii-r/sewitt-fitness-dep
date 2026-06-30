@@ -23,7 +23,7 @@ export default function Hero() {
 
       <div className="container-x relative z-10 pt-32 md:pt-40 pb-24">
         <div className="max-w-[820px] reveal">
-          <h1 className="h-display text-[64px] md:text-[80px] leading-[0.95] text-[--color-smoke] mb-6">
+          <h1 className="h-display text-[clamp(2.25rem,12vw,5rem)] leading-[0.95] text-[--color-smoke] mb-6">
             SEWITT.FITNESS
           </h1>
           <p className="text-[20px] md:text-[24px] text-[--color-smoke] font-light max-w-[640px] mb-4 reveal" data-delay="80">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import posthog from "posthog-js";
 import { subscribeEmail } from "@/lib/subscribe";
 
@@ -17,12 +18,13 @@ export default function BlogSubscribe({
 }) {
   const [email, setEmail] = useState("");
   const [company, setCompany] = useState(""); // honeypot
+  const [accepted, setAccepted] = useState(false); // privacy policy consent
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (status === "submitting") return;
+    if (status === "submitting" || !accepted) return;
     setStatus("submitting");
     setMessage("");
 
@@ -58,11 +60,7 @@ export default function BlogSubscribe({
           {message}
         </p>
       ) : (
-        <form
-          onSubmit={onSubmit}
-          className="mt-6 flex flex-col sm:flex-row gap-3 max-w-xl"
-          noValidate
-        >
+        <form onSubmit={onSubmit} className="mt-6 max-w-xl" noValidate>
           {/* Honeypot — hidden from humans, tempting to bots. */}
           <input
             type="text"
@@ -75,26 +73,49 @@ export default function BlogSubscribe({
             aria-hidden="true"
           />
 
-          <label htmlFor="blog-subscribe-email" className="sr-only">
-            Email address
+          <div className="flex flex-col sm:flex-row gap-3">
+            <label htmlFor="blog-subscribe-email" className="sr-only">
+              Email address
+            </label>
+            <input
+              id="blog-subscribe-email"
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@email.com"
+              disabled={status === "submitting"}
+              className="flex-1 rounded-[2px] border border-white/15 bg-onyx px-4 py-3 text-[15px] text-smoke placeholder:text-smoke/35 outline-none transition-colors focus:border-brick disabled:opacity-60"
+            />
+            <button
+              type="submit"
+              disabled={status === "submitting" || !accepted}
+              className="btn btn-primary disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {status === "submitting" ? "Signing up…" : "Notify Me"}
+            </button>
+          </div>
+
+          <label className="mt-3 flex cursor-pointer items-start gap-2 text-[13px] text-smoke/60">
+            <input
+              type="checkbox"
+              checked={accepted}
+              onChange={(e) => setAccepted(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 accent-brick"
+            />
+            <span>
+              I agree to the{" "}
+              <Link
+                href="/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gold underline-offset-2 hover:underline"
+              >
+                Privacy Policy
+              </Link>
+              .
+            </span>
           </label>
-          <input
-            id="blog-subscribe-email"
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@email.com"
-            disabled={status === "submitting"}
-            className="flex-1 rounded-[2px] border border-white/15 bg-onyx px-4 py-3 text-[15px] text-smoke placeholder:text-smoke/35 outline-none transition-colors focus:border-brick disabled:opacity-60"
-          />
-          <button
-            type="submit"
-            disabled={status === "submitting"}
-            className="btn btn-primary disabled:opacity-60"
-          >
-            {status === "submitting" ? "Signing up…" : "Notify Me"}
-          </button>
         </form>
       )}
 
